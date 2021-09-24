@@ -14,12 +14,34 @@
 	],
 	"main": "./out/extension.js",
 	"contributes": {
-		"commands": [
-			{
-				"command": "tidy-explorer.helloWorld",
-				"title": "Hello World"
+		"configuration": {
+			"title": "Tidy Explorer",
+			"properties": {
+				"tidyExplorer.pockets": {
+					"type":"array",
+					"description": "Definition of file Pockets",
+					"items": {
+						"type":"object",
+						"properties": {
+							"name":{"type":"string"},
+							"selectors": {
+								"type":"array",
+								"items": {
+									"type":"object",
+									"properties": {
+										"base": {"type":"string"},
+										"includeGlob": {"type":"string"},
+										"excludeGlob": {"type":"string"}
+									}
+								}
+							}
+						}
+					}
+
+
+				}
 			}
-		]
+		}
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
