@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"path": "project2"
+		},
+		{
+			"path": "project1"
+		}
+	],
+	"settings": {
+		"tidyExplorer.pockets": [
+		{
+			"name": "project 1 configurations",
+			"selectors": [
+				{
+					"workspaceFolder": "project1",
+					"includeGlob": "*.json"
+				}
+			]
+		}
+		]
+	}
+}
