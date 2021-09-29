@@ -29,10 +29,12 @@
 								"items": {
 									"type":"object",
 									"properties": {
-										"base": {"type":"string"},
+										"workspaceFolder": {"type": "string"},
+										"basePath": {"type":"string"},
 										"includeGlob": {"type":"string"},
 										"excludeGlob": {"type":"string"}
-									}
+									},
+									"required": ["includeGlob"]
 								}
 							}
 						}
