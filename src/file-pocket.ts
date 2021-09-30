@@ -1,12 +1,27 @@
 import {PocketConfiguration, SelectorConfiguration} from "./configuration"
 import * as vscode from "vscode"
-import { worker } from "cluster";
-import { BADRESP } from "dns";
+
+const CONFIG_KEY = "tidyExplorer"; // must sync with package.json
+
+export function init() : Pocket[] {
+    const config  = vscode.workspace.getConfiguration(CONFIG_KEY);
+    const pocketConfigs : PocketConfiguration[] = config.pockets; // sync with package.json
+    return pocketConfigs.map((config)=>new Pocket(config));
+}
+
 export class Pocket {
-
+    readonly name:string;
+    private selectors_:[SelectorConfiguration, Selector|Error][] = [];
+    get selectors():readonly (readonly [SelectorConfiguration, Selector|Error])[]  {return this.selectors_}
     constructor(readonly config: PocketConfiguration ){
-
-
+        this.name = config.name;
+        this.selectors_ = config.selectors.map((config)=>{
+            try{
+                return [config, new Selector(config)];
+            } catch (error) {
+                return [config, error as Error];
+            }
+        })
     }
 }
 
@@ -19,7 +34,7 @@ class Selector {
     private watcher_: vscode.FileSystemWatcher|undefined;
     get watcher() { return this.watcher_;};
     private fileUris_:  vscode.Uri[]|undefined;
-    get fileUris():ReadonlyArray<vscode.Uri> | undefined { return this.fileUris_};
+    get fileUris():readonly vscode.Uri[] | undefined { return this.fileUris_};
 
     /**
      * Constructs an instance. Throws if config is invalid.

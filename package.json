@@ -10,7 +10,7 @@
 		"Other"
 	],
 	"activationEvents": [
-        "onCommand:tidy-explorer.helloWorld"
+        "onStartupFinished"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
