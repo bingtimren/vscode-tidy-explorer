@@ -1,26 +1,22 @@
-import {PocketConfiguration, SelectorConfiguration} from "./configuration"
+import { PocketConfiguration, SelectorConfiguration } from "./configuration"
 import * as vscode from "vscode"
 
 const CONFIG_KEY = "tidyExplorer"; // must sync with package.json
 
-export function init() : Pocket[] {
-    const config  = vscode.workspace.getConfiguration(CONFIG_KEY);
-    const pocketConfigs : PocketConfiguration[] = config.pockets; // sync with package.json
-    return pocketConfigs.map((config)=>new Pocket(config));
+export function init(): Pocket[] {
+    const config = vscode.workspace.getConfiguration(CONFIG_KEY);
+    const pocketConfigs: PocketConfiguration[] = config.pockets; // sync with package.json
+    return pocketConfigs.map((config) => new Pocket(config));
 }
 
 export class Pocket {
-    readonly name:string;
-    private selectors_:[SelectorConfiguration, Selector|Error][] = [];
-    get selectors():readonly (readonly [SelectorConfiguration, Selector|Error])[]  {return this.selectors_}
-    constructor(readonly config: PocketConfiguration ){
+    readonly name: string;
+    private selectors_: Selector[] = [];
+    get selectors(): readonly Selector[] { return this.selectors_ }
+    constructor(readonly config: PocketConfiguration) {
         this.name = config.name;
-        this.selectors_ = config.selectors.map((config)=>{
-            try{
-                return [config, new Selector(config)];
-            } catch (error) {
-                return [config, error as Error];
-            }
+        this.selectors_ = config.selectors.map((config) => {
+            return new Selector(config);
         })
     }
 }
@@ -29,41 +25,48 @@ export class Pocket {
  * A Selector for calling vscode.workspace.findFiles or, if only includePattern is provided,
  * for added into "files.exclude" settings
  */
-class Selector {
-    readonly includePattern: vscode.GlobPattern;
-    private watcher_: vscode.FileSystemWatcher|undefined;
-    get watcher() { return this.watcher_;};
-    private fileUris_:  vscode.Uri[]|undefined;
-    get fileUris():readonly vscode.Uri[] | undefined { return this.fileUris_};
+export class Selector {
+    readonly includePattern: vscode.GlobPattern | undefined;
+    readonly error: string | undefined;
+    private watcher_: vscode.FileSystemWatcher | undefined;
+    get watcher() { return this.watcher_; };
+    private fileUris_: vscode.Uri[] | undefined;
+    get fileUris(): readonly vscode.Uri[] | undefined { return this.fileUris_ };
 
     /**
-     * Constructs an instance. Throws if config is invalid.
+     * Constructs an instance. Never throw. 
+     * If config is invalid, set error with a message, and includePattern would be undefined.
+     * Otherwise includePattern is defined.
+     * 
      * @param config 
      */
     constructor(readonly config: SelectorConfiguration) {
         if (config.workspaceFolder) {
-            const specifiedFolders = vscode.workspace.workspaceFolders?.filter((wf)=>wf.name===config.workspaceFolder);
-            if ((!specifiedFolders) || specifiedFolders.length===0){
-                throw new Error("Cannot find the specified workspace folder in workspace");
-            }
-            // construct a relative pattern
-            if (config.basePath) {
-                const wfUri = specifiedFolders[0].uri;
-                this.includePattern = 
-                    new vscode.RelativePattern(
-                        vscode.Uri.joinPath(wfUri, config.basePath),
-                        config.includeGlob);
-            } else {
-                this.includePattern = new vscode.RelativePattern(
-                    specifiedFolders[0], config.includeGlob
-                );
-            }
+            const specifiedFolders = vscode.workspace.workspaceFolders?.filter((wf) => wf.name === config.workspaceFolder);
+            if ((!specifiedFolders) || specifiedFolders.length === 0) {
+                this.error = "Cannot find the specified workspace folder in workspace";
+                return;
+            } else
+                // construct a relative pattern
+                if (config.basePath) {
+                    const wfUri = specifiedFolders[0].uri;
+                    this.includePattern =
+                        new vscode.RelativePattern(
+                            vscode.Uri.joinPath(wfUri, config.basePath),
+                            config.includeGlob);
+                } else {
+                    this.includePattern = new vscode.RelativePattern(
+                        specifiedFolders[0], config.includeGlob
+                    );
+                }
         } else {
             // no workspace folder, no basePath
             if (config.basePath) {
-                throw new Error("Selector cannot contain basePath if workspaceFolder is not specified");
+                this.error = "Selector cannot contain basePath if workspaceFolder is not specified";
+            } else {
+                this.includePattern = config.includeGlob;
             }
-            this.includePattern = config.includeGlob;
+
         };
     }
 
@@ -72,18 +75,29 @@ class Selector {
      * add / remove from the fileUris upon file creation / deletion
      */
     public async watchFiles() {
+        if (this.includePattern === undefined) {
+            throw new Error("invalid state, check error property")
+        }
         this.fileUris_ = await vscode.workspace.findFiles(this.includePattern);
         this.watcher_ = vscode.workspace.createFileSystemWatcher(this.includePattern, false, true, false);
-        this.watcher_.onDidCreate((e)=>{
+        this.watcher_.onDidCreate((e) => {
             this.fileUris_?.push(e);
         });
-        this.watcher_.onDidDelete((e)=>{
+        this.watcher_.onDidDelete((e) => {
             const uriStr = e.toString();
-            for (let i=0; i<(this.fileUris_?this.fileUris_.length:0); i++){
+            for (let i = 0; i < (this.fileUris_ ? this.fileUris_.length : 0); i++) {
                 if (this.fileUris_![i].toString() === uriStr) {
                     this.fileUris_?.splice(i, 1);
                 }
             }
         })
+    };
+
+
+    public toString(): string {
+        const base = this.config.workspaceFolder ? (
+            `(${this.config.workspaceFolder}${this.config.basePath ? `:${this.config.basePath}` : ""}) `
+        ) : "";
+        return `${base}${this.config.includeGlob}`;
     }
 }

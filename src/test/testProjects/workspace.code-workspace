@@ -11,11 +11,12 @@
 		"tidyExplorer.pockets": [
 		
 		{
-			"name": "project 1 configurations",
+			"name": "project 1 sources",
 			"selectors": [
 				{
 					"workspaceFolder": "project1",
-					"includeGlob": "*.json"
+					"basePath": "src",
+					"includeGlob": "*.ts"
 				}
 			]
 		}

@@ -1,0 +1,29 @@
+import * as vscode from "vscode";
+import {Pocket, Selector} from "./file-pocket"
+
+export class PocketSelectorItem extends vscode.TreeItem {
+    constructor(readonly item: (Pocket|Selector) ) {
+        super(
+            item instanceof Pocket? item.name : item.toString(),
+            item instanceof Pocket && item.selectors && item.selectors.length > 0? vscode.TreeItemCollapsibleState.Collapsed : undefined
+        );
+    }
+}
+
+export class PocketTreeDataProvider implements vscode.TreeDataProvider<Pocket|Selector> {
+    constructor(private readonly root : Pocket[]){};
+    onDidChangeTreeData?: vscode.Event<void | Pocket | Selector | null | undefined> | undefined;
+    getTreeItem(element: Pocket | Selector): vscode.TreeItem | Thenable<vscode.TreeItem> {
+        return new PocketSelectorItem(element);
+    }
+    getChildren(element?: Pocket | Selector): vscode.ProviderResult<(Pocket | Selector)[]> {
+        if (element === undefined) {
+            return this.root;
+        };
+        if (element instanceof Pocket) {
+            return element.selectors as Selector[];
+        };
+        // Selector, no children to return
+    }
+    
+}
