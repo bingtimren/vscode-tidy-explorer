@@ -3,8 +3,8 @@
 import * as vscode from 'vscode';
 import { PocketConfiguration } from './configuration';
 import { Pocket } from "./file-pocket"
-import { CONFIG_KEY, FILES_EXCLUDE_KEY, POCKET_VIEW_ID } from './id-keys';
-import { PocketTreeDataProvider } from "./pocketsView"
+import { CMD_ADD_TO_FILE_EXCLUDES, CMD_REMOVE_FROM_FILE_EXCLUDES, CONFIG_KEY, FILES_EXCLUDE_KEY, POCKET_VIEW_ID } from './id-keys';
+import { cmdAddToFilesExclude, cmdRemoveFromFilesExclude, PocketTreeDataProvider } from "./pocketsView"
 
 
 function pocketInit(): Pocket[] {
@@ -21,8 +21,6 @@ export function activate(context: vscode.ExtensionContext) {
 	const pocketView = vscode.window.createTreeView(POCKET_VIEW_ID, {
 		treeDataProvider: pocketViewDataProvider
 	});
-
-	
 	vscode.workspace.onDidChangeConfiguration((event) => {
 		if (event.affectsConfiguration(CONFIG_KEY) || event.affectsConfiguration(FILES_EXCLUDE_KEY)
 		) {
@@ -31,6 +29,14 @@ export function activate(context: vscode.ExtensionContext) {
 			pocketViewDataProvider.reload(pockets);
 		};
 	});
+	// add commands
+	vscode.commands.registerCommand(
+		CMD_ADD_TO_FILE_EXCLUDES, cmdAddToFilesExclude
+	)
+	vscode.commands.registerCommand(
+		CMD_REMOVE_FROM_FILE_EXCLUDES, cmdRemoveFromFilesExclude
+	)
+	
 }
 
 

@@ -1,3 +1,9 @@
-export const POCKET_VIEW_ID = "tidyExplorerPockets"
-export const CONFIG_KEY = "tidyExplorer"; // must sync with package.json
 export const FILES_EXCLUDE_KEY = "files.exclude";
+
+// configuration
+export const CONFIG_KEY = "tidyExplorer"; 
+
+// pocket view, values must sync with package.json
+export const POCKET_VIEW_ID = "tidyExplorerPockets"
+export const CMD_ADD_TO_FILE_EXCLUDES = "tidyExplorer.addToFileExcludes"
+export const CMD_REMOVE_FROM_FILE_EXCLUDES = "tidyExplorer.removeFromFileExcludes"

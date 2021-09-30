@@ -1,5 +1,5 @@
 {
-  "name": "tidy-explorer",
+	"name": "tidy-explorer",
 	"displayName": "tidy-explorer",
 	"description": "Tools for tidying up vscode explorer",
 	"version": "0.0.1",
@@ -10,7 +10,7 @@
 		"Other"
 	],
 	"activationEvents": [
-        "onStartupFinished"
+		"onStartupFinished"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -18,36 +18,64 @@
 			"title": "Tidy Explorer",
 			"properties": {
 				"tidyExplorer.pockets": {
-					"type":"array",
+					"type": "array",
 					"description": "Definition of file Pockets",
 					"items": {
-						"type":"object",
+						"type": "object",
 						"properties": {
-							"name":{"type":"string"},
+							"name": {
+								"type": "string"
+							},
 							"selectors": {
-								"type":"array",
+								"type": "array",
 								"items": {
-									"type":"object",
+									"type": "object",
 									"properties": {
-										"workspaceFolder": {"type": "string"},
-										"basePath": {"type":"string"},
-										"includeGlob": {"type":"string"}
+										"workspaceFolder": {
+											"type": "string"
+										},
+										"basePath": {
+											"type": "string"
+										},
+										"includeGlob": {
+											"type": "string"
+										}
 									},
-									"required": ["includeGlob"]
+									"required": [
+										"includeGlob"
+									]
 								}
 							}
 						}
 					}
-
-
 				}
 			}
 		},
 		"views": {
 			"explorer": [
 				{
-					"id":"tidyExplorerPockets",
+					"id": "tidyExplorerPockets",
 					"name": "File Groups"
+				}
+			]
+		},
+		"commands": [
+			{
+				"command": "tidyExplorer.addToFileExcludes",
+				"title": "Hide in explorer"
+			},
+			{
+				"command": "tidyExplorer.removeFromFileExcludes",
+				"title": "Un-hide in explorer"
+			}
+		],
+		"menus": {
+			"view/item/context": [
+				{
+					"command": "tidyExplorer.addToFileExcludes"
+				},
+				{
+					"command": "tidyExplorer.removeFromFileExcludes"
 				}
 			]
 		}

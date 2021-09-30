@@ -1,6 +1,10 @@
 import * as vscode from "vscode";
 import {Pocket, Selector} from "./file-pocket"
+import { FILES_EXCLUDE_KEY } from "./id-keys";
 
+/**
+ * TreeView item for pocket or selector
+ */
 export class PocketSelectorItem extends vscode.TreeItem {
     constructor(readonly item: (Pocket|Selector) ) {
         super(
@@ -12,7 +16,7 @@ export class PocketSelectorItem extends vscode.TreeItem {
                 this.iconPath = new vscode.ThemeIcon("error", new vscode.ThemeColor("list.errorForeground")); 
                 this.tooltip = item.error;
             } else {
-                this.iconPath = new vscode.ThemeIcon("selection");
+                this.iconPath = new vscode.ThemeIcon("list-flat");
             }
         
         };
@@ -20,6 +24,9 @@ export class PocketSelectorItem extends vscode.TreeItem {
     }
 }
 
+/**
+ * DataProvider for Pocket View
+ */
 export class PocketTreeDataProvider implements vscode.TreeDataProvider<Pocket|Selector> {
     constructor(private root : Pocket[]){};
     public reload(root: Pocket[]){
@@ -43,3 +50,28 @@ export class PocketTreeDataProvider implements vscode.TreeDataProvider<Pocket|Se
     }
     
 }
+
+/**
+ * add the pocket or selector into files.exclude setting
+ * @param item 
+ */
+export function cmdAddToFilesExclude(item : Pocket|Selector) {
+    setFilesExclude(item, true);
+};
+
+/**
+ * remove the pocket or selector from files.exclude setting
+ * @param item 
+ */
+export function cmdRemoveFromFilesExclude(item : Pocket|Selector) {
+    setFilesExclude(item, false);
+};
+
+async function setFilesExclude(item : Pocket|Selector, include:boolean) {    
+    const items : readonly Selector[] = item instanceof Pocket? item.selectors : [item];
+    for (item of items) {
+        await item.setFilesExclude(include);
+    }
+}
+
+ 
