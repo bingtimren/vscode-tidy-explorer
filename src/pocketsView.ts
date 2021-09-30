@@ -7,6 +7,16 @@ export class PocketSelectorItem extends vscode.TreeItem {
             item instanceof Pocket? item.name : item.toString(),
             item instanceof Pocket && item.selectors && item.selectors.length > 0? vscode.TreeItemCollapsibleState.Collapsed : undefined
         );
+        if (item instanceof Selector) {
+            if (item.error) {
+                this.iconPath = new vscode.ThemeIcon("error", new vscode.ThemeColor("list.errorForeground")); 
+                this.tooltip = item.error;
+            } else {
+                this.iconPath = new vscode.ThemeIcon("selection");
+            }
+        
+        };
+
     }
 }
 
