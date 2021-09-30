@@ -31,8 +31,7 @@
 									"properties": {
 										"workspaceFolder": {"type": "string"},
 										"basePath": {"type":"string"},
-										"includeGlob": {"type":"string"},
-										"excludeGlob": {"type":"string"}
+										"includeGlob": {"type":"string"}
 									},
 									"required": ["includeGlob"]
 								}
