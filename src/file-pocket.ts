@@ -1,13 +1,6 @@
 import { PocketConfiguration, SelectorConfiguration } from "./configuration"
 import * as vscode from "vscode"
 
-const CONFIG_KEY = "tidyExplorer"; // must sync with package.json
-
-export function init(): Pocket[] {
-    const config = vscode.workspace.getConfiguration(CONFIG_KEY);
-    const pocketConfigs: PocketConfiguration[] = config.pockets; // sync with package.json
-    return pocketConfigs.map((config) => new Pocket(config));
-}
 
 export class Pocket {
     readonly name: string;

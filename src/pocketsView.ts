@@ -11,8 +11,14 @@ export class PocketSelectorItem extends vscode.TreeItem {
 }
 
 export class PocketTreeDataProvider implements vscode.TreeDataProvider<Pocket|Selector> {
-    constructor(private readonly root : Pocket[]){};
-    onDidChangeTreeData?: vscode.Event<void | Pocket | Selector | null | undefined> | undefined;
+    constructor(private root : Pocket[]){};
+    public reload(root: Pocket[]){
+        this.root = root;
+        this.onDidChangeTreeData_.fire();
+    }
+    private onDidChangeTreeData_: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
+    readonly onDidChangeTreeData?: vscode.Event<void | Pocket | Selector | null | undefined> | undefined = this.onDidChangeTreeData_.event;
+
     getTreeItem(element: Pocket | Selector): vscode.TreeItem | Thenable<vscode.TreeItem> {
         return new PocketSelectorItem(element);
     }
