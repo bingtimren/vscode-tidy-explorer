@@ -3,11 +3,9 @@
 import * as vscode from 'vscode';
 import { PocketConfiguration } from './configuration';
 import { Pocket } from "./file-pocket"
+import { CONFIG_KEY, FILES_EXCLUDE_KEY, POCKET_VIEW_ID } from './id-keys';
 import { PocketTreeDataProvider } from "./pocketsView"
 
-const POCKET_VIEW_ID = "tidyExplorerPockets"
-
-const CONFIG_KEY = "tidyExplorer"; // must sync with package.json
 
 function pocketInit(): Pocket[] {
 	const config = vscode.workspace.getConfiguration(CONFIG_KEY);
@@ -26,7 +24,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 	
 	vscode.workspace.onDidChangeConfiguration((event) => {
-		if (event.affectsConfiguration(CONFIG_KEY)) {
+		if (event.affectsConfiguration(CONFIG_KEY) || event.affectsConfiguration(FILES_EXCLUDE_KEY)
+		) {
 			// reload
 			const pockets: Pocket[] = pocketInit();
 			pocketViewDataProvider.reload(pockets);
