@@ -9,8 +9,7 @@
 export interface SelectorConfiguration {
     workspaceFolder?: string,
     basePath?: string,
-    includeGlob: string,
-    excludeGlob?: string
+    includeGlob: string
 }
 
 /**
