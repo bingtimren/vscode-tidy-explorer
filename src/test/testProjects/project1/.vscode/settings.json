@@ -1,12 +1,15 @@
 {
     "tidyExplorer.pockets": [
-    {
-        "name": "Project 1 JS",
-        "selectors": [
-            {
-                "includeGlob": "**/*.js"
-            }
-        ]
-    }
-    ]
+        {
+            "name": "Project 1 JS",
+            "selectors": [
+                {
+                    "includeGlob": "**/*.js"
+                }
+            ]
+        }
+    ],
+    "files.exclude": {
+        "**/*.js": true
+    },
 }

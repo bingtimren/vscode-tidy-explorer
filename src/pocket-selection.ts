@@ -1,13 +1,15 @@
 import { PocketConfiguration, SelectorConfiguration } from "./configuration"
 import * as vscode from "vscode"
 import { CONFIG_KEY, FILES_EXCLUDE_KEY } from "./id-keys";
+import { strictEqual } from "assert";
+import { assert, timeStamp } from "console";
 
 export class Pocket {
     readonly name: string;
-    readonly scopedFilesExcludeConfig : vscode.WorkspaceConfiguration;
+    readonly scopedFilesExcludeConfig: vscode.WorkspaceConfiguration;
     private selectors_: Selector[] = [];
     get selectors(): readonly Selector[] { return this.selectors_ }
-    constructor(readonly config: PocketConfiguration, readonly workspaceFolder: vscode.WorkspaceFolder|undefined) {
+    constructor(readonly config: PocketConfiguration, readonly workspaceFolder: vscode.WorkspaceFolder | undefined) {
         this.name = config.name;
         this.workspaceFolder = workspaceFolder;
         this.scopedFilesExcludeConfig = vscode.workspace.getConfiguration(FILES_EXCLUDE_KEY, this.workspaceFolder);
@@ -15,6 +17,36 @@ export class Pocket {
             return new Selector(this, config);
         })
     }
+
+    /**
+     * Set all selectors in this pocket to hide / un-hide from the explorer (in files.exclude)
+     * @param include 
+     */
+    public async setFilesExclude(include: boolean) {
+        this.setFilesExcludeForSelectors(this.selectors_, include);
+    }
+
+    /**
+     * Set some selectors in this pocket to hide / un-hide
+     * @param selectors an array of selectors, must be associated with this Pocket
+     * @param include 
+     */
+    public async setFilesExcludeForSelectors(selectors: Selector[], include: boolean) {
+        const scopedRootConfig = vscode.workspace.getConfiguration(undefined, this.workspaceFolder);
+        const inspectFilesExcludeValue = scopedRootConfig.inspect(FILES_EXCLUDE_KEY);
+        const existingValues: object = inspectFilesExcludeValue ? (
+            this.workspaceFolder ? (inspectFilesExcludeValue.workspaceFolderValue as (object | undefined) || {})
+                : (inspectFilesExcludeValue.workspaceValue as (object | undefined) || {})
+        ) : {};
+        const valueToUpdate: { [key: string]: true | undefined } = Object.assign({}, existingValues);
+        // update the selector globs
+        for (const selector of selectors) {
+            assert(selector.pocket === this);
+            valueToUpdate[selector.basePathJoinsIncludeGlob] = include ? true : undefined;
+        };
+        await scopedRootConfig.update(FILES_EXCLUDE_KEY, valueToUpdate, undefined); // update workspace folder or workspace
+    }
+
 }
 
 /**
@@ -29,7 +61,7 @@ export class Selector {
      */
     readonly isSetInFilesExcluded: boolean;
     private filesWatcher_: vscode.FileSystemWatcher | undefined;
-    get filesWatcher() : vscode.FileSystemWatcher | undefined { return this.filesWatcher_; };
+    get filesWatcher(): vscode.FileSystemWatcher | undefined { return this.filesWatcher_; };
     private fileUris_: vscode.Uri[] | undefined;
     /**
      * files selected by this selector - only defined after watchFiles() has been called
@@ -52,7 +84,7 @@ export class Selector {
         this.isSetInFilesExcluded = (pocket.scopedFilesExcludeConfig[this.basePathJoinsIncludeGlob] === true);
     }
 
-    get includeGlobPatternForFindFile() : vscode.GlobPattern {
+    get includeGlobPatternForFindFile(): vscode.GlobPattern {
         if (this.workspaceFolder) {
             // if this selector is bound to a workspace, construct a relative-pattern
             // https://code.visualstudio.com/api/references/vscode-api#RelativePattern
@@ -61,8 +93,8 @@ export class Selector {
                 vscode.Uri.joinPath(this.workspaceFolder.uri, this.config.basePath) :
                 this.workspaceFolder);
             return new vscode.RelativePattern(
-                    findFileRelativeBase,
-                    this.config.includeGlob);
+                findFileRelativeBase,
+                this.config.includeGlob);
         } else {
             // no workspace folder, return a GlobPattern string
             // https://code.visualstudio.com/api/references/vscode-api#GlobPattern
@@ -96,7 +128,7 @@ export class Selector {
      * the 'basePath' + 'includeGlob' in config, proper handling the delimiter '/' between them
      * @returns the glob pattern for putting into files.exclude settings
      */
-    public get basePathJoinsIncludeGlob() : string {
+    public get basePathJoinsIncludeGlob(): string {
         const base = this.config.basePath;
         if (base) {
             return (base +
@@ -109,19 +141,7 @@ export class Selector {
     }
 
     public async setFilesExclude(include: boolean) {
-        if (this.isSetInFilesExcluded === include) {
-            return; // nothing to do, already included/removed
-        }
-        const scopedConfig = this.pocket.scopedFilesExcludeConfig;
-        const inspectValue = scopedConfig.inspect("");
-        const existingValues: object = inspectValue ? (
-            this.workspaceFolder ? (inspectValue.workspaceFolderValue as object | undefined || {})
-                : (inspectValue.workspaceValue as object | undefined || {})
-        ) : {};
-        const valueToUpdate = Object.assign({}, existingValues, {
-            [this.basePathJoinsIncludeGlob]: include ? true : undefined
-        });
-        await scopedConfig.update("", valueToUpdate, undefined); // update workspace folder or workspace
+        this.pocket.setFilesExcludeForSelectors([this], include);
     }
 
     private getScopedConfig(section?: string) {
@@ -132,21 +152,25 @@ export class Selector {
 /**
  * Load pockets from workspace and workspace folder configs
  */
-export function pocketInit() : Pocket[] {
-    const result : Pocket[] = [];
+export function pocketInit(): Pocket[] {
+    const result: Pocket[] = [];
     // load workspace-folders bound pockets
-    for (const wf of (vscode.workspace.workspaceFolders || [])){
+    for (const wf of (vscode.workspace.workspaceFolders || [])) {
         result.push(...scopedPocketInit(wf));
     }
     // if workspaceFile exists (even unsaved) load workspace-bound pockets
-    if (vscode.workspace.workspaceFile){
+    if (vscode.workspace.workspaceFile) {
         result.push(...scopedPocketInit(undefined));
     }
     return result;
 }
 
-function scopedPocketInit(scope: vscode.WorkspaceFolder|undefined): Pocket[]{
-    const config = vscode.workspace.getConfiguration(CONFIG_KEY, scope);
-    const pocketConfigs : PocketConfiguration[] = config.pockets || [];
-    return pocketConfigs.map((pocketConf)=>new Pocket(pocketConf, scope));
+function scopedPocketInit(scope: vscode.WorkspaceFolder | undefined): Pocket[] {
+    const configInspect = vscode.workspace.getConfiguration(undefined, scope).inspect(CONFIG_KEY);
+    if (configInspect) {
+        const scopedConfigInspect = scope ? configInspect.workspaceFolderValue : configInspect.workspaceValue;
+        const pocketConfigs: PocketConfiguration[] = (scopedConfigInspect as any)?.pockets || [];
+        return pocketConfigs.map((pocketConf) => new Pocket(pocketConf, scope));
+    } else
+        return [];
 }

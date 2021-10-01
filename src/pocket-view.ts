@@ -62,7 +62,9 @@ function getItemLabelAndCollapsibleState(item: Pocket | Selector): [string, vsco
             item.selectors && item.selectors.length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None
         ]
     } else { // Selector
-        return [item.basePathJoinsIncludeGlob, vscode.TreeItemCollapsibleState.None];
+        return [
+            `[${item.isSetInFilesExcluded?"X":"-"}] ${item.basePathJoinsIncludeGlob}`, 
+            vscode.TreeItemCollapsibleState.None];
     }
 }
 
