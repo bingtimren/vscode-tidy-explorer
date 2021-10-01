@@ -10,6 +10,6 @@
         }
     ],
     "files.exclude": {
-        "**/*.js": true
+        "existing": true
     },
 }

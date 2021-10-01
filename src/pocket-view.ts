@@ -43,7 +43,7 @@ export class PocketTreeDataProvider implements vscode.TreeDataProvider<Pocket | 
  * @param item 
  */
 export function cmdAddToFilesExclude(item: Pocket | Selector) {
-    setFilesExclude(item, true);
+    item.setFilesExclude(true);
 };
 
 /**
@@ -51,7 +51,7 @@ export function cmdAddToFilesExclude(item: Pocket | Selector) {
  * @param item 
  */
 export function cmdRemoveFromFilesExclude(item: Pocket | Selector) {
-    setFilesExclude(item, false);
+    item.setFilesExclude(false);
 };
 
 
@@ -71,13 +71,6 @@ function getItemLabelAndCollapsibleState(item: Pocket | Selector): [string, vsco
 function decorateItem(item: Pocket | Selector, viewItem: vscode.TreeItem) {
     if (item instanceof Selector) {
         viewItem.iconPath = new vscode.ThemeIcon("list-flat");
-    }
-}
-
-async function setFilesExclude(item: Pocket | Selector, include: boolean) {
-    const items: readonly Selector[] = item instanceof Pocket ? item.selectors : [item];
-    for (item of items) {
-        await item.setFilesExclude(include);
     }
 }
 

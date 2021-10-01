@@ -23,6 +23,8 @@
 				]
 			}
 		],
-		"files.exclude": {},
+		"files.exclude": {
+			"existing": true
+		},
 	}
 }

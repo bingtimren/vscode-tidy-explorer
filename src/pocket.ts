@@ -23,7 +23,7 @@ export class Pocket {
      * @param include 
      */
     public async setFilesExclude(include: boolean) {
-        this.setFilesExcludeForSelectors(this.selectors_, include);
+        await this.setFilesExcludeForSelectors(this.selectors_, include);
     }
 
     /**
