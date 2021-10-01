@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { Pocket, Selector } from "./pocket-selection"
+import { Pocket, Selector } from "./pocket"
 
 /**
  * TreeView item for pocket or selector
