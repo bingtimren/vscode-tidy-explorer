@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { Pocket, Selector } from "./file-pocket"
+import { Pocket, Selector } from "./pocket-selection"
 
 /**
  * TreeView item for pocket or selector
@@ -58,7 +58,7 @@ export function cmdRemoveFromFilesExclude(item: Pocket | Selector) {
 function getItemLabelAndCollapsibleState(item: Pocket | Selector): [string, vscode.TreeItemCollapsibleState] {
     if (item instanceof Pocket) {
         return [
-            item.workspaceFolder ? `${item.name} (${item.workspaceFolder.name})` : item.name,
+            item.workspaceFolder ? `${item.name} @${item.workspaceFolder.name}` : item.name,
             item.selectors && item.selectors.length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None
         ]
     } else { // Selector
