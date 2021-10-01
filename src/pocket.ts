@@ -46,6 +46,12 @@ export class Pocket {
         };
         await scopedRootConfig.update(FILES_EXCLUDE_KEY, valueToUpdate, undefined); // update workspace folder or workspace
     }
+    public isFilesExcludeAllSet():boolean|undefined{
+        const anyTrue = this.selectors.some(s=>s.isSetInFilesExcluded);
+        const anyFalse = this.selectors.some(s=>!s.isSetInFilesExcluded);
+        return anyTrue? (anyFalse?undefined:true):(anyFalse?false:undefined);
+    }
+
 
 }
 

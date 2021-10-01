@@ -24,7 +24,9 @@
 			}
 		],
 		"files.exclude": {
-			"existing": true
+			"existing": true,
+			"src/**/*.js": true,
+			"src/**/*.map": true
 		},
 	}
 }

@@ -60,20 +60,26 @@
 		"commands": [
 			{
 				"command": "tidyExplorer.addToFileExcludes",
-				"title": "Hide in explorer"
+				"title": "Hide in explorer",
+				"icon": "$(eye-closed)"
 			},
 			{
 				"command": "tidyExplorer.removeFromFileExcludes",
-				"title": "Un-hide in explorer"
+				"title": "Un-hide in explorer",
+				"icon": "$(eye)"
 			}
 		],
 		"menus": {
 			"view/item/context": [
 				{
-					"command": "tidyExplorer.addToFileExcludes"
+					"command": "tidyExplorer.addToFileExcludes",
+					"group": "inline",
+					"when": "viewItem == files-x-unset || viewItem == files-x-mixed "
 				},
 				{
-					"command": "tidyExplorer.removeFromFileExcludes"
+					"command": "tidyExplorer.removeFromFileExcludes",
+					"group": "inline",
+					"when": "viewItem == files-x-set || viewItem == files-x-mixed "
 				}
 			]
 		}
