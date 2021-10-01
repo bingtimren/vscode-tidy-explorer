@@ -1,35 +1,22 @@
 import * as vscode from "vscode";
-import {Pocket, Selector} from "./file-pocket"
-import { FILES_EXCLUDE_KEY } from "./id-keys";
+import { Pocket, Selector } from "./file-pocket"
 
 /**
  * TreeView item for pocket or selector
  */
 export class PocketSelectorItem extends vscode.TreeItem {
-    constructor(readonly item: (Pocket|Selector) ) {
-        super(
-            item instanceof Pocket? item.name : item.toString(),
-            item instanceof Pocket && item.selectors && item.selectors.length > 0? vscode.TreeItemCollapsibleState.Collapsed : undefined
-        );
-        if (item instanceof Selector) {
-            if (item.error) {
-                this.iconPath = new vscode.ThemeIcon("error", new vscode.ThemeColor("list.errorForeground")); 
-                this.tooltip = item.error;
-            } else {
-                this.iconPath = new vscode.ThemeIcon("list-flat");
-            }
-        
-        };
-
+    constructor(readonly item: (Pocket | Selector)) {
+        super(...getItemLabelAndCollapsibleState(item));
+        decorateItem(item, this);
     }
 }
 
 /**
  * DataProvider for Pocket View
  */
-export class PocketTreeDataProvider implements vscode.TreeDataProvider<Pocket|Selector> {
-    constructor(private root : Pocket[]){};
-    public reload(root: Pocket[]){
+export class PocketTreeDataProvider implements vscode.TreeDataProvider<Pocket | Selector> {
+    constructor(private root: Pocket[]) { };
+    public reload(root: Pocket[]) {
         this.root = root;
         this.onDidChangeTreeData_.fire();
     }
@@ -48,14 +35,14 @@ export class PocketTreeDataProvider implements vscode.TreeDataProvider<Pocket|Se
         };
         // Selector, no children to return
     }
-    
+
 }
 
 /**
  * add the pocket or selector into files.exclude setting
  * @param item 
  */
-export function cmdAddToFilesExclude(item : Pocket|Selector) {
+export function cmdAddToFilesExclude(item: Pocket | Selector) {
     setFilesExclude(item, true);
 };
 
@@ -63,15 +50,33 @@ export function cmdAddToFilesExclude(item : Pocket|Selector) {
  * remove the pocket or selector from files.exclude setting
  * @param item 
  */
-export function cmdRemoveFromFilesExclude(item : Pocket|Selector) {
+export function cmdRemoveFromFilesExclude(item: Pocket | Selector) {
     setFilesExclude(item, false);
 };
 
-async function setFilesExclude(item : Pocket|Selector, include:boolean) {    
-    const items : readonly Selector[] = item instanceof Pocket? item.selectors : [item];
+
+function getItemLabelAndCollapsibleState(item: Pocket | Selector): [string, vscode.TreeItemCollapsibleState] {
+    if (item instanceof Pocket) {
+        return [
+            item.workspaceFolder ? `${item.name} (${item.workspaceFolder.name})` : item.name,
+            item.selectors && item.selectors.length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None
+        ]
+    } else { // Selector
+        return [item.basePathJoinsIncludeGlob, vscode.TreeItemCollapsibleState.None];
+    }
+}
+
+function decorateItem(item: Pocket | Selector, viewItem: vscode.TreeItem) {
+    if (item instanceof Selector) {
+        viewItem.iconPath = new vscode.ThemeIcon("list-flat");
+    }
+}
+
+async function setFilesExclude(item: Pocket | Selector, include: boolean) {
+    const items: readonly Selector[] = item instanceof Pocket ? item.selectors : [item];
     for (item of items) {
         await item.setFilesExclude(include);
     }
 }
 
- 
+

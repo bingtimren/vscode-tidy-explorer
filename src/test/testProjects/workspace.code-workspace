@@ -9,24 +9,20 @@
 	],
 	"settings": {
 		"tidyExplorer.pockets": [
-		
-		{
-			"name": "project 1 TSS",
-			"selectors": [
-				{
-					"workspaceFolder": "project1",
-					"basePath": "src",
-					"includeGlob": "**/*.js"
-				},
-				{
-					"workspaceFolder": "project1",
-					"basePath": "src",
-					"includeGlob": "**/*.map"
-				}
-			]
-		}
+			{
+				"name": "Workspace JS & MAP",
+				"selectors": [
+					{
+						"basePath": "src",
+						"includeGlob": "**/*.js"
+					},
+					{
+						"basePath": "src",
+						"includeGlob": "**/*.map"
+					}
+				]
+			}
 		],
-		"files.exclude": {
-		},
+		"files.exclude": {},
 	}
 }

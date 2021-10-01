@@ -19,6 +19,7 @@
 			"properties": {
 				"tidyExplorer.pockets": {
 					"type": "array",
+					"scope": "resource",
 					"description": "Definition of file Pockets",
 					"items": {
 						"type": "object",
@@ -31,9 +32,6 @@
 								"items": {
 									"type": "object",
 									"properties": {
-										"workspaceFolder": {
-											"type": "string"
-										},
 										"basePath": {
 											"type": "string"
 										},
