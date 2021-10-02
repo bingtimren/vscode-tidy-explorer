@@ -12,14 +12,8 @@
 			{
 				"name": "Workspace JS & MAP",
 				"selectors": [
-					{
-						"basePath": "src",
-						"includeGlob": "**/*.js"
-					},
-					{
-						"basePath": "src",
-						"includeGlob": "**/*.map"
-					}
+					"src/**/*.js",
+					"src/**/*.map"
 				]
 			}
 		],

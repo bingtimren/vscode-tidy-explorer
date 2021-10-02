@@ -6,10 +6,7 @@
  * 
  */
 
-export interface SelectorConfiguration {
-    basePath?: string,
-    includeGlob: string
-}
+export type SelectorConfiguration = string;
 
 /**
  * A Pocket is a group of selectors for filtering files, for example, "configurations", "view controllers", "unit tests"

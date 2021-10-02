@@ -30,18 +30,7 @@
 							"selectors": {
 								"type": "array",
 								"items": {
-									"type": "object",
-									"properties": {
-										"basePath": {
-											"type": "string"
-										},
-										"includeGlob": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"includeGlob"
-									]
+									"type": "string"
 								}
 							}
 						}

@@ -1,8 +1,6 @@
 import { PocketConfiguration, SelectorConfiguration } from "./configuration"
 import * as vscode from "vscode"
 import { CONFIG_KEY, FILES_EXCLUDE_KEY } from "./id-keys";
-import { strictEqual } from "assert";
-import { assert, timeStamp } from "console";
 
 export class Pocket {
     readonly name: string;
@@ -41,15 +39,15 @@ export class Pocket {
         const valueToUpdate: { [key: string]: true | undefined } = Object.assign({}, existingValues);
         // update the selector globs
         for (const selector of selectors) {
-            assert(selector.pocket === this);
-            valueToUpdate[selector.basePathJoinsIncludeGlob] = include ? true : undefined;
+            if(selector.pocket !== this) {throw new Error("Invalid, selector must be with this pocket")};
+            valueToUpdate[selector.globPattern] = include ? true : undefined;
         };
         await scopedRootConfig.update(FILES_EXCLUDE_KEY, valueToUpdate, undefined); // update workspace folder or workspace
     }
-    public isFilesExcludeAllSet():boolean|undefined{
-        const anyTrue = this.selectors.some(s=>s.isSetInFilesExcluded);
-        const anyFalse = this.selectors.some(s=>!s.isSetInFilesExcluded);
-        return anyTrue? (anyFalse?undefined:true):(anyFalse?false:undefined);
+    public isFilesExcludeAllSet(): boolean | undefined {
+        const anyTrue = this.selectors.some(s => s.isSetInFilesExcluded);
+        const anyFalse = this.selectors.some(s => !s.isSetInFilesExcluded);
+        return anyTrue ? (anyFalse ? undefined : true) : (anyFalse ? false : undefined);
     }
 
 
@@ -69,6 +67,7 @@ export class Selector {
     private filesWatcher_: vscode.FileSystemWatcher | undefined;
     get filesWatcher(): vscode.FileSystemWatcher | undefined { return this.filesWatcher_; };
     private fileUris_: vscode.Uri[] | undefined;
+
     /**
      * files selected by this selector - only defined after watchFiles() has been called
      */
@@ -86,27 +85,15 @@ export class Selector {
      * 
      * @param config 
      */
-    constructor(readonly pocket: Pocket, readonly config: SelectorConfiguration) {
-        this.isSetInFilesExcluded = (pocket.scopedFilesExcludeConfig[this.basePathJoinsIncludeGlob] === true);
+    constructor(readonly pocket: Pocket, readonly globPattern: SelectorConfiguration) {
+        this.isSetInFilesExcluded = (pocket.scopedFilesExcludeConfig[this.globPattern] === true);
     }
 
     get includeGlobPatternForFindFile(): vscode.GlobPattern {
-        if (this.workspaceFolder) {
-            // if this selector is bound to a workspace, construct a relative-pattern
-            // https://code.visualstudio.com/api/references/vscode-api#RelativePattern
-            // the base is either a URL or the Workspace Folder
-            const findFileRelativeBase = (this.config.basePath ?
-                vscode.Uri.joinPath(this.workspaceFolder.uri, this.config.basePath) :
-                this.workspaceFolder);
-            return new vscode.RelativePattern(
-                findFileRelativeBase,
-                this.config.includeGlob);
-        } else {
-            // no workspace folder, return a GlobPattern string
-            // https://code.visualstudio.com/api/references/vscode-api#GlobPattern
-            return this.basePathJoinsIncludeGlob
-        };
-
+        // if this selector is bound to a workspace, construct a relative-pattern, otherwise a global pattern (string)
+        // https://code.visualstudio.com/api/references/vscode-api#RelativePattern
+        // https://code.visualstudio.com/api/references/vscode-api#GlobPattern
+        return (this.workspaceFolder ? new vscode.RelativePattern(this.workspaceFolder, this.globPattern) : this.globPattern);
     };
 
     /**
@@ -130,21 +117,6 @@ export class Selector {
         })
     };
 
-    /**
-     * the 'basePath' + 'includeGlob' in config, proper handling the delimiter '/' between them
-     * @returns the glob pattern for putting into files.exclude settings
-     */
-    public get basePathJoinsIncludeGlob(): string {
-        const base = this.config.basePath;
-        if (base) {
-            return (base +
-                ((base.endsWith("/") || this.config.includeGlob.startsWith("/")) ? "" : "/") +
-                this.config.includeGlob
-            );
-        } else {
-            return this.config.includeGlob;
-        }
-    }
 
     public async setFilesExclude(include: boolean) {
         this.pocket.setFilesExcludeForSelectors([this], include);

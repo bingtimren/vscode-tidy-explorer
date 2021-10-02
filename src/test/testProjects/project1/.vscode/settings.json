@@ -3,9 +3,7 @@
         {
             "name": "Project 1 JS",
             "selectors": [
-                {
-                    "includeGlob": "**/*.js"
-                }
+                "**/*.js"
             ]
         }
     ],

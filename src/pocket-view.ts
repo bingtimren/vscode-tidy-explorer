@@ -77,7 +77,7 @@ function getItemLabelAndCollapsibleState(item: Pocket | Selector): [string, vsco
         ]
     } else { // Selector
         return [
-            item.basePathJoinsIncludeGlob,
+            item.globPattern,
             vscode.TreeItemCollapsibleState.None];
     }
 }
