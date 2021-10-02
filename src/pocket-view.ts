@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
-import { Pocket, Selector } from "./pocket"
+import { Pocket } from "./pocket"
+import { Selector } from "./selector";
 
 
 type PocketViewMode = "files.exclude" | "tidy-explorer";
