@@ -10,9 +10,9 @@ export class TidyExplorerTreeDataProvider implements TreeDataProvider<UriNode>{
     readonly onDidChangeTreeData: Event<void | UriNode | null | undefined> = this.onDidChangeTreeDataEmitter.event;
     private readonly root : UriNode = UriNode.createRoot();
     private selectors: Selector[] = [];
-    public addSelector(selector: Selector) {
+    public async addSelector(selector: Selector) {
         // add all files
-        for (const uri of selector.fileUris) {
+        for (const uri of await selector.getFileUris()) {
             this.addFile(uri, selector);
         };
         // listen to file changes
@@ -25,8 +25,8 @@ export class TidyExplorerTreeDataProvider implements TreeDataProvider<UriNode>{
         this.onDidChangeTreeDataEmitter.fire(undefined);
     };
     public removeSelector(selector: Selector) {
-        const affectedNode = this.root.delChildrenFromSelector(selector);
-        this.onDidChangeTreeDataEmitter.fire(affectedNode);
+        this.root.delChildrenFromSelector(selector);
+        this.onDidChangeTreeDataEmitter.fire(undefined);
     }
     private addFile(uri: Uri, fromSelector: Selector) {
         const relativePath = this.getRelativePath(uri, fromSelector.workspaceFolder);
@@ -40,8 +40,7 @@ export class TidyExplorerTreeDataProvider implements TreeDataProvider<UriNode>{
     }
     private getRelativePath(uri:Uri, knownWorkspaceFolder: WorkspaceFolder|undefined):string {
         const workspaceFolder = knownWorkspaceFolder || workspace.getWorkspaceFolder(uri) as WorkspaceFolder;
-        const relativePath = workspace.asRelativePath(uri);
-        return workspaceFolder.name+(relativePath.startsWith(PATH_SEPARATOR)?"":PATH_SEPARATOR)+relativePath;
+        return workspace.asRelativePath(uri, true);
     }
     getTreeItem(element: UriNode): TreeItem | Thenable<TreeItem> {
         const item = new TreeItem(element.name, element.children?TreeItemCollapsibleState.Collapsed:TreeItemCollapsibleState.None);
@@ -49,7 +48,10 @@ export class TidyExplorerTreeDataProvider implements TreeDataProvider<UriNode>{
         return item;
     }
     getChildren(element?: UriNode): ProviderResult<UriNode[]> {
-            return Object.values(element? (element.children||[]) : (this.root.children||[]));
+            return Object.values(element? 
+                (element.children?Object.values(element.children):[]) :
+                (this.root.children?Object.values(this.root.children):[])
+            );
     }
 }
 

@@ -26,9 +26,9 @@ export function cmdRemoveFromFilesExclude(item: Pocket | Selector) {
  * @param item
  */
 
-export function cmdAddToTidyView(item: Pocket | Selector) {
+export async function cmdAddToTidyView(item: Pocket | Selector) {
     for (const selector of selectors(item)){
-        fileViewDataProvider.addSelector(selector);
+        await fileViewDataProvider.addSelector(selector);
     }
 }
 ;

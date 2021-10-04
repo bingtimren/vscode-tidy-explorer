@@ -3,9 +3,9 @@
 import * as vscode from 'vscode';
 import { PocketConfiguration } from './configuration';
 import { Pocket, pocketInit } from "./pocket"
-import { CMD_ADD_TO_FILE_EXCLUDES, CMD_REMOVE_FROM_FILE_EXCLUDES, CONFIG_KEY, FILES_EXCLUDE_KEY, FILE_VIEW_ID, POCKET_VIEW_ID } from './id-keys';
+import { CMD_ADD_TO_FILE_EXCLUDES, CMD_ADD_TO_TIDY_VIEW, CMD_REMOVE_FROM_FILE_EXCLUDES, CMD_REMOVE_FROM_TIDY_VIEW, CONFIG_KEY, FILES_EXCLUDE_KEY, FILE_VIEW_ID, POCKET_VIEW_ID } from './id-keys';
 import { PocketTreeDataProvider } from "./pocket-view"
-import { cmdAddToFilesExclude, cmdRemoveFromFilesExclude } from "./pocket-view-commands";
+import { cmdAddToFilesExclude, cmdAddToTidyView, cmdRemoveFromFilesExclude, cmdRemoveFromTidyView } from "./pocket-view-commands";
 import { TidyExplorerTreeDataProvider } from './tidy-view';
 
 export const pocketViewDataProvider = new PocketTreeDataProvider([]);
@@ -44,6 +44,14 @@ export function activate(context: vscode.ExtensionContext) {
 		treeDataProvider: fileViewDataProvider 
 	});
 	context.subscriptions.push(fileView);
+
+	// add tidy view related commands
+	vscode.commands.registerCommand(
+		CMD_ADD_TO_TIDY_VIEW, cmdAddToTidyView
+	),
+	vscode.commands.registerCommand(
+		CMD_REMOVE_FROM_TIDY_VIEW, cmdRemoveFromTidyView
+	)
 
 }
 

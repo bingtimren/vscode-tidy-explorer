@@ -90,28 +90,20 @@ export class UriNode {
     }
 
     
-    public delChildrenFromSelector(selector: Selector) : UriNode | undefined {
+    public delChildrenFromSelector(selector: Selector) {
         if (this.fromSelectors.has(selector)) {
             this.fromSelectors.delete(selector);
             if (this.fromSelectors.size===0) {
                 // everything should be deleted from here, "this" is affected
                 return this;
             }
-            let affectedNode = undefined;
             for (const [childKey, childNode] of Object.entries(this.children || [])) {
-                const affectedNodeInChild = childNode.delChildrenFromSelector(selector);
+                childNode.delChildrenFromSelector(selector);
                 if (childNode.fromSelectors.size===0) {
                     // child should be detached
                     delete this.children![childKey];
-                    affectedNode = this;                    
                 };
-                // if two children are affected, this would be the return node, otherwise the one affected
-                affectedNode = affectedNode? (affectedNodeInChild? this:affectedNode):affectedNodeInChild;
             }
-            return affectedNode;
-        } else {
-            // nothing to do
-            return undefined
         }
     }
 }

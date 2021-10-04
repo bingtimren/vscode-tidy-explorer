@@ -20,12 +20,15 @@ export class Selector {
     private onDidFileDeleteEmitter: vscode.EventEmitter<vscode.Uri> = new vscode.EventEmitter<vscode.Uri>();
     readonly onDidFileDelete: vscode.Event<vscode.Uri> = this.onDidFileDeleteEmitter.event;
 
-    private fileUriRegistry: Object & {[key:string]: vscode.Uri} = {};
+    private readonly fileUriRegistry: Object & {[key:string]: vscode.Uri} = {};
 
     /**
      * files selected by this selector - only defined after watchFiles() has been called
      */
-    get fileUris(): readonly vscode.Uri[] { return Object.values(this.fileUriRegistry) };
+    public async getFileUris(): Promise<readonly vscode.Uri[]> { 
+        await this.watchFiles();
+        return Object.values(this.fileUriRegistry); 
+    };
 
     /**
      * the workspaceFolder for this selector (from the pocket), or undefined indicating
@@ -49,7 +52,7 @@ export class Selector {
      * first do a vscode.workspace.findFiles to populate the fileUris, then create the watcher, and
      * add / remove from the fileUris upon file creation / deletion
      */
-    public async watchFiles() {
+    async watchFiles() {
         // the pattern for findFile, be a relative-pattern if selector is on a workspace folder, otherwise a global pattern
         const includePattern : vscode.GlobPattern =  this.workspaceFolder ? new vscode.RelativePattern(this.workspaceFolder, this.globPattern) : this.globPattern;
         const foundUris = await vscode.workspace.findFiles(includePattern);

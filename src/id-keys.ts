@@ -10,3 +10,5 @@ export const CMD_REMOVE_FROM_FILE_EXCLUDES = "tidyExplorer.removeFromFileExclude
 
 // tidy explorer view
 export const FILE_VIEW_ID = "tidyExplorerFileView"
+export const CMD_ADD_TO_TIDY_VIEW = "tidyExplorer.addToTidyView"
+export const CMD_REMOVE_FROM_TIDY_VIEW = "tidyExplorer.removeFromTidyView"
