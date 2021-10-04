@@ -14,14 +14,19 @@ export class Selector {
      * i.e. hidden in explorer
      */
     readonly isSetInFilesExcluded: boolean;
-    private filesWatcher_: vscode.FileSystemWatcher | undefined;
-    get filesWatcher(): vscode.FileSystemWatcher | undefined { return this.filesWatcher_; };
-    private fileUris_: vscode.Uri[] | undefined;
+    private filesWatcher: vscode.FileSystemWatcher|undefined;
+    private onDidFileCreateEmitter: vscode.EventEmitter<vscode.Uri> = new vscode.EventEmitter<vscode.Uri>();
+    readonly onDidFileCreate: vscode.Event<vscode.Uri> = this.onDidFileCreateEmitter.event;
+    private onDidFileDeleteEmitter: vscode.EventEmitter<vscode.Uri> = new vscode.EventEmitter<vscode.Uri>();
+    readonly onDidFileDelete: vscode.Event<vscode.Uri> = this.onDidFileDeleteEmitter.event;
+
+    private fileUriRegistry: Object & {[key:string]: vscode.Uri} = {};
 
     /**
      * files selected by this selector - only defined after watchFiles() has been called
      */
-    get fileUris(): readonly vscode.Uri[] | undefined { return this.fileUris_; };
+    get fileUris(): readonly vscode.Uri[] { return Object.values(this.fileUriRegistry) };
+
     /**
      * the workspaceFolder for this selector (from the pocket), or undefined indicating
      * this selector is defined on a multi-root workspace file
@@ -39,30 +44,38 @@ export class Selector {
         this.isSetInFilesExcluded = (pocket.scopedFilesExcludeConfig[this.globPattern] === true);
     }
 
-    get includeGlobPatternForFindFile(): vscode.GlobPattern {
-        // if this selector is bound to a workspace, construct a relative-pattern, otherwise a global pattern (string)
-        // https://code.visualstudio.com/api/references/vscode-api#RelativePattern
-        // https://code.visualstudio.com/api/references/vscode-api#GlobPattern
-        return (this.workspaceFolder ? new vscode.RelativePattern(this.workspaceFolder, this.globPattern) : this.globPattern);
-    };
 
     /**
      * first do a vscode.workspace.findFiles to populate the fileUris, then create the watcher, and
      * add / remove from the fileUris upon file creation / deletion
      */
     public async watchFiles() {
-        const includePattern = this.includeGlobPatternForFindFile;
-        this.fileUris_ = await vscode.workspace.findFiles(includePattern);
-        this.filesWatcher_ = vscode.workspace.createFileSystemWatcher(includePattern, false, true, false);
-        this.filesWatcher_.onDidCreate((e) => {
-            this.fileUris_?.push(e);
+        // the pattern for findFile, be a relative-pattern if selector is on a workspace folder, otherwise a global pattern
+        const includePattern : vscode.GlobPattern =  this.workspaceFolder ? new vscode.RelativePattern(this.workspaceFolder, this.globPattern) : this.globPattern;
+        const foundUris = await vscode.workspace.findFiles(includePattern);
+        for (const uri of (foundUris?foundUris:[])){
+            this.fileUriRegistry[uri.toString()] = uri;
+        }
+        // watch
+        this.filesWatcher = vscode.workspace.createFileSystemWatcher(includePattern, false, true, false);
+        this.filesWatcher.onDidCreate(async (uri) => {
+            // do a find to check if the uri is not filtered out by files.exclude etc.
+            const uriWorkspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+            const uriRelativePath = vscode.workspace.asRelativePath(uri);
+            const uriAsPattern = uriWorkspaceFolder? new vscode.RelativePattern(uriWorkspaceFolder, uriRelativePath):uri.path
+            const recheck = await vscode.workspace.findFiles(uriAsPattern, undefined, 1);
+            if (recheck.length>0){
+                // passed re-check, add to uri registry and fire event
+                this.fileUriRegistry[uri.toString()] = uri;
+                this.onDidFileCreateEmitter.fire(uri);
+            }
+            // otherwise ignore create event
         });
-        this.filesWatcher_.onDidDelete((e) => {
-            const uriStr = e.toString();
-            for (let i = 0; i < (this.fileUris_ ? this.fileUris_.length : 0); i++) {
-                if (this.fileUris_![i].toString() === uriStr) {
-                    this.fileUris_?.splice(i, 1);
-                }
+        this.filesWatcher.onDidDelete((uri) => {
+            const uriStr = uri.toString();
+            if (this.fileUriRegistry.hasOwnProperty(uriStr)) {
+                delete this.fileUriRegistry[uriStr];
+                this.onDidFileDeleteEmitter.fire(uri);
             }
         });
     };

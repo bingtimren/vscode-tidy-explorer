@@ -7,3 +7,6 @@ export const CONFIG_KEY = "tidyExplorer";
 export const POCKET_VIEW_ID = "tidyExplorerPockets"
 export const CMD_ADD_TO_FILE_EXCLUDES = "tidyExplorer.addToFileExcludes"
 export const CMD_REMOVE_FROM_FILE_EXCLUDES = "tidyExplorer.removeFromFileExcludes"
+
+// tidy explorer view
+export const FILE_VIEW_ID = "tidyExplorerFileView"

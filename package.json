@@ -43,6 +43,10 @@
 				{
 					"id": "tidyExplorerPockets",
 					"name": "File Groups"
+				},
+				{
+					"id": "tidyExplorerFileView",
+					"name": "Tidy Explorer"
 				}
 			]
 		},

@@ -3,8 +3,9 @@
 import * as vscode from 'vscode';
 import { PocketConfiguration } from './configuration';
 import { Pocket, pocketInit } from "./pocket"
-import { CMD_ADD_TO_FILE_EXCLUDES, CMD_REMOVE_FROM_FILE_EXCLUDES, CONFIG_KEY, FILES_EXCLUDE_KEY, POCKET_VIEW_ID } from './id-keys';
+import { CMD_ADD_TO_FILE_EXCLUDES, CMD_REMOVE_FROM_FILE_EXCLUDES, CONFIG_KEY, FILES_EXCLUDE_KEY, FILE_VIEW_ID, POCKET_VIEW_ID } from './id-keys';
 import { cmdAddToFilesExclude, cmdRemoveFromFilesExclude, PocketTreeDataProvider } from "./pocket-view"
+import { TidyExplorerTreeDataProvider } from './tidy-view';
 
 
 // this method is called when your extension is activated
@@ -33,7 +34,14 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.commands.registerCommand(
 		CMD_REMOVE_FROM_FILE_EXCLUDES, cmdRemoveFromFilesExclude
 	)
-	
+
+	// create tidy explorer view
+	const fileViewDataProvider = new TidyExplorerTreeDataProvider();
+	const fileView = vscode.window.createTreeView(FILE_VIEW_ID, { 
+		treeDataProvider: fileViewDataProvider 
+	});
+	context.subscriptions.push(fileView);
+
 }
 
 
