@@ -4,15 +4,18 @@ import * as vscode from 'vscode';
 import { PocketConfiguration } from './configuration';
 import { Pocket, pocketInit } from "./pocket"
 import { CMD_ADD_TO_FILE_EXCLUDES, CMD_REMOVE_FROM_FILE_EXCLUDES, CONFIG_KEY, FILES_EXCLUDE_KEY, FILE_VIEW_ID, POCKET_VIEW_ID } from './id-keys';
-import { cmdAddToFilesExclude, cmdRemoveFromFilesExclude, PocketTreeDataProvider } from "./pocket-view"
+import { PocketTreeDataProvider } from "./pocket-view"
+import { cmdAddToFilesExclude, cmdRemoveFromFilesExclude } from "./pocket-view-commands";
 import { TidyExplorerTreeDataProvider } from './tidy-view';
 
+export const pocketViewDataProvider = new PocketTreeDataProvider([]);
+export const fileViewDataProvider = new TidyExplorerTreeDataProvider();
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 	// load pockets & create pocket view with data provider
-	const pocketViewDataProvider = new PocketTreeDataProvider(pocketInit());
+	pocketViewDataProvider.reload(pocketInit());
 	const pocketView = vscode.window.createTreeView(POCKET_VIEW_ID, {
 		treeDataProvider: pocketViewDataProvider
 	});
@@ -36,7 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
 	)
 
 	// create tidy explorer view
-	const fileViewDataProvider = new TidyExplorerTreeDataProvider();
+
 	const fileView = vscode.window.createTreeView(FILE_VIEW_ID, { 
 		treeDataProvider: fileViewDataProvider 
 	});
