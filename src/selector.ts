@@ -66,7 +66,7 @@ export class Selector {
         this.filesWatcher.onDidCreate(async (uri) => {
             // do a find to check if the uri is not filtered out by files.exclude etc.
             const uriWorkspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-            const uriRelativePath = vscode.workspace.asRelativePath(uri);
+            const uriRelativePath = vscode.workspace.asRelativePath(uri, false);
             const uriAsPattern = uriWorkspaceFolder? new vscode.RelativePattern(uriWorkspaceFolder, uriRelativePath):uri.path
             const recheck = await vscode.workspace.findFiles(uriAsPattern, undefined, 1);
             if (recheck.length>0){
@@ -76,6 +76,9 @@ export class Selector {
             }
             // otherwise ignore create event
         });
+        // from vscode API
+        // Note that when watching for file changes such as '*/.js', notifications will not be sent when a parent folder is moved or deleted 
+        // (this is a known limitation of the current implementation and may change in the future).
         this.filesWatcher.onDidDelete((uri) => {
             const uriStr = uri.toString();
             if (this.fileUriRegistry.hasOwnProperty(uriStr)) {
