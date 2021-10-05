@@ -14,6 +14,7 @@ export class Selector {
      * i.e. hidden in explorer
      */
     readonly isSetInFilesExcluded: boolean;
+    readonly idString:string;
     private filesWatcher: vscode.FileSystemWatcher|undefined;
     private onDidFileCreateEmitter: vscode.EventEmitter<vscode.Uri> = new vscode.EventEmitter<vscode.Uri>();
     readonly onDidFileCreate: vscode.Event<vscode.Uri> = this.onDidFileCreateEmitter.event;
@@ -45,6 +46,7 @@ export class Selector {
      */
     constructor(readonly pocket: Pocket, readonly globPattern: SelectorConfiguration) {
         this.isSetInFilesExcluded = (pocket.scopedFilesExcludeConfig[this.globPattern] === true);
+        this.idString = `${pocket.name}::${this.pocket.workspaceFolder?.uri.toString()||"[G]"}::${globPattern}`;
     }
 
 
@@ -90,4 +92,4 @@ export class Selector {
     public async setFilesExclude(setInFilesExclude: boolean) {
         this.pocket.setFilesExcludeForSelectors([this], setInFilesExclude);
     }
-}
+};

@@ -13,30 +13,35 @@ export class TidyExplorerTreeDataProvider implements TreeDataProvider<UriNode>{
     public async addSelector(selector: Selector) {
         // add all files
         for (const uri of await selector.getFileUris()) {
-            this.addFile(uri, selector);
+            this.addFileWithoutFireEvent(uri, selector);
         };
         // listen to file changes
         selector.onDidFileCreate((created) => {
-            this.addFile(created, selector);
+            this.addFileAndFireEvent(created, selector);
         });
         selector.onDidFileDelete((deleted) => {
             this.deleteFile(deleted, selector.workspaceFolder);
         });
-        this.onDidChangeTreeDataEmitter.fire(undefined);
+        this.onDidChangeTreeDataEmitter.fire(undefined); // refresh the whole tree
     };
     public removeSelector(selector: Selector) {
-        this.root.delChildrenFromSelector(selector);
-        this.onDidChangeTreeDataEmitter.fire(undefined);
+        const nodeWhereDeletionOccurs = this.root.delChildrenFromSelector(selector.idString);
+        this.onDidChangeTreeDataEmitter.fire(nodeWhereDeletionOccurs === this.root? undefined : nodeWhereDeletionOccurs);
     }
-    private addFile(uri: Uri, fromSelector: Selector) {
+    private addFileWithoutFireEvent(uri: Uri, fromSelector: Selector) {
         const relativePath = this.getRelativePath(uri, fromSelector.workspaceFolder);
-        const affectedNode = this.root.addChildren(uri, fromSelector, relativePath, 0);
-        this.onDidChangeTreeDataEmitter.fire(affectedNode);
+        return this.root.addFile(uri, fromSelector.idString, relativePath, 0);
     }
+    private addFileAndFireEvent(uri: Uri, fromSelector: Selector) {
+        const affectedNode = this.addFileWithoutFireEvent(uri, fromSelector);
+        this.onDidChangeTreeDataEmitter.fire(affectedNode === this.root? undefined : affectedNode );
+    }
+
+
     private deleteFile(uri: Uri, knownWorkspaceFolder: WorkspaceFolder | undefined) {
         const relativePath = this.getRelativePath(uri, knownWorkspaceFolder);
-        const affectedNode = this.root.delChildren(relativePath, 0);
-        this.onDidChangeTreeDataEmitter.fire(affectedNode);
+        const affectedNode = this.root.delFile(relativePath, 0);
+        this.onDidChangeTreeDataEmitter.fire(affectedNode === this.root? undefined : affectedNode);
     }
     private getRelativePath(uri: Uri, knownWorkspaceFolder: WorkspaceFolder | undefined): string {
         const workspaceFolder = knownWorkspaceFolder || workspace.getWorkspaceFolder(uri) as WorkspaceFolder;

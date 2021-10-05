@@ -1,14 +1,14 @@
 import { Uri, workspace } from "vscode";
-import { Selector } from "./selector";
 import { returnNextSeparatorAndName } from "./tidy-view";
 
 export class UriNode {
     readonly children: Object & { [key: string]: UriNode; } | undefined;
-    private readonly fromSelectors: Set<Selector> = new Set<Selector>();
+    private readonly fromSelectors: Set<string> = new Set<string>();
     public static createRoot() : UriNode {
         return new UriNode(null,null,"ROOT",false);
     }
-    private constructor(readonly uri: Uri | null, fromSelector: Selector|null, readonly name: string, isLeaf: boolean) {
+    get isRoot():boolean {return this.uri === null};
+    private constructor(readonly uri: Uri | null, fromSelector: string|null, readonly name: string, isLeaf: boolean) {
         if (!isLeaf) {
             this.children = {};
         };
@@ -33,32 +33,35 @@ export class UriNode {
      *          the return result is appropriate to be passed as the change event value
      *          if the fileUri already exists, will return undefined - as no node is affected
      */
-    public addChildren(fileUri: Uri, fromSelector: Selector, relativePath: string, startPosition: number): UriNode | undefined {
-        this.fromSelectors.add(fromSelector);
+    public addFile(fileUri: Uri, fromSelector: string, relativePath: string, startPosition: number): UriNode | undefined {
+        // parent is responsible for setting children's "fromSelector", and no one set root's (not required)
+        // find out position of next separator and the name of next segment
         const [nextSeparator, name] = returnNextSeparatorAndName(relativePath, startPosition);
-        if (nextSeparator < 0) {
-            // no more separator, the leaf uri should be added as child
-            // if everything works normal should never add child to a left - no child for a file, only child for dir
-            const existingChild = this.children![name];
-            if (existingChild) {
-                existingChild.fromSelectors.add(fromSelector);
-                return undefined; // no node is affected, only a child has a new selector
-            } else {
-                this.children![name] = new UriNode(fileUri, fromSelector, name, true);
-                return this; // this node has a new child, affected
-            }
+        // find out if the path has been created already
+        const existingChild = this.children![name];
+        // otherwise create the child node
+        const newChild = existingChild? undefined : this.addNewChild(fileUri, fromSelector, name, nextSeparator<0);
+        const theChild = existingChild || newChild;
+        theChild.fromSelectors.add(fromSelector);
+        if (nextSeparator<0) {
+            return existingChild? undefined : this; // if an existing leaf node, no affection since just add a selector to an existing file, otherwise return this (where insertion starts)
         } else {
-            // a dir, perhaps already exists
-            const existChild = this.children![name];
-            const newChild = (existChild ? undefined : 
-                new UriNode(
-                    this.uri? Uri.joinPath(this.uri, name) : workspace.getWorkspaceFolder(fileUri)!.uri, 
-                    fromSelector, name, false));
-            if (newChild) {
-                this.children![name] = newChild;
-            };
-            return (existChild || newChild).addChildren(fileUri, fromSelector, relativePath, nextSeparator + 1);
+            // still needs to go down the path
+            const childrenAffected = theChild.addFile(fileUri, fromSelector, relativePath, nextSeparator+1 );
+            return existingChild? childrenAffected : this; // if is an existing child, return the affected children, otherwise return this (where insertion starts)
         }
+    }
+
+    private addNewChild(fileUri: Uri, fromSelector:string, name:string, isLeaf:boolean) {
+        const newChild = new UriNode(
+            this.uri? (isLeaf ? fileUri : Uri.joinPath(this.uri, name)) : // not workspace-folder, then either file or dir
+                workspace.getWorkspaceFolder(fileUri)!.uri, // the workspace folder
+            fromSelector,
+            name,
+            isLeaf // is leaf - if no more separator
+        );
+        this.children![name] = newChild;
+        return newChild;
     }
 
     /**
@@ -67,43 +70,46 @@ export class UriNode {
      * @param startPosition - the start position, must be the last PATH_SEPARATOR + 1
      * @returns the immediate parent node of the finally deleted UriNode
      */
-    public delChildren(relativePath: string, startPosition: number): UriNode | undefined {
+    public delFile(relativePath: string, startPosition: number): UriNode | undefined {
         const [nextSeparator, name] = returnNextSeparatorAndName(relativePath, startPosition);
         // check in case already deleted
-        if (! this.children![name]) {
+        const downPathChild = this.children![name];
+        if (! downPathChild) {
             return undefined; // already deleted, no effect
         }
         if (nextSeparator < 0) {
             delete this.children![name]; // delete the leaf
-            return this;
+            return this; // and this node is where deletion starts
         } else { // ask the child to delete 
-            const affectedChild = this.children![name];
-            const toReturn = affectedChild.delChildren(relativePath, nextSeparator + 1);
-            if (Object.keys(affectedChild.children!).length == 0) {
-                // left an empty children, delete as well
+            const affectedChild = downPathChild.delFile(relativePath, nextSeparator + 1);
+            if (Object.keys(downPathChild.children!).length == 0) {
+                // left an empty down-path child, delete as well
                 delete this.children![name];
                 return this;
             } else {
-                return toReturn;
+                return affectedChild;
             }
         }
     }
 
     
-    public delChildrenFromSelector(selector: Selector) {
-        if (this.fromSelectors.has(selector)) {
-            this.fromSelectors.delete(selector);
-            if (this.fromSelectors.size===0) {
-                // everything should be deleted from here, "this" is affected
-                return this;
-            }
-            for (const [childKey, childNode] of Object.entries(this.children || [])) {
-                childNode.delChildrenFromSelector(selector);
-                if (childNode.fromSelectors.size===0) {
-                    // child should be detached
+    public delChildrenFromSelector(selector: string) : UriNode | undefined  {
+        let nodeAffected : UriNode | undefined = undefined;
+        for (const [childKey, childNode] of Object.entries(this.children || [])) {
+            if (childNode.fromSelectors.delete(selector)) { // so childNode was at least partially from selector
+                // if childNode not only from this but also other selector, go down the path and find the affected node (where deletion occurs)
+                // otherwise undefined
+                const childNodeAffected = (childNode.fromSelectors.size>0? childNode.delChildrenFromSelector(selector):undefined);
+                if (childNode.fromSelectors.size===0 || (childNode.children && (Object.keys(childNode.children).length === 0))) {
+                    // for whatever reason the childNode now has no selector source, or is a non-leaf none-children node
                     delete this.children![childKey];
-                };
+                    nodeAffected = this; // "this" is where deletion occurs
+                } 
+                // if already a node is affected, then (if this child is affected, "this" is affected as the common root, otherwise if this child not affected, keep the same)
+                // if no previous node affected, then see this child
+                nodeAffected = nodeAffected? (childNodeAffected? this: nodeAffected) : childNodeAffected; 
             }
         }
+        return nodeAffected;
     }
 }

@@ -77,20 +77,22 @@
 				{
 					"command": "tidyExplorer.addToFileExcludes",
 					"group": "inline",
-					"when": "viewItem == files-x-unset || viewItem == files-x-mixed "
+					"when": "view == tidyExplorerPockets && viewItem =~ /files\\-x\\-(unset|mixed)/"
 				},
 				{
 					"command": "tidyExplorer.removeFromFileExcludes",
 					"group": "inline",
-					"when": "viewItem == files-x-set || viewItem == files-x-mixed "
+					"when": "view == tidyExplorerPockets && viewItem =~ /files\\-x\\-(set|mixed)/"
 				},
 				{
 					"command": "tidyExplorer.addToTidyView",
-					"group": "inline"
+					"group": "inline",
+					"when": "view == tidyExplorerPockets"
 				},
 				{
 					"command": "tidyExplorer.removeFromTidyView",
-					"group": "inline"
+					"group": "inline",
+					"when": "view == tidyExplorerPockets"					
 				}
 
 			]
