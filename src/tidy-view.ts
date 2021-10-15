@@ -5,11 +5,31 @@ import { UriNode } from "./tidy-view-node";
 const PATH_SEPARATOR = "/";
 
 
+
+// selector files and watcher cache
+
+const selectorCache : Map<string, {
+    files: 
+}> = new Map();
+
+// other data and values
+const root: UriNode = UriNode.createRoot();
+const onDidChangeTreeDataEmitter: EventEmitter<UriNode | undefined> = new EventEmitter<UriNode | undefined>();
+    
+
+// TidyExplorer DataProvider
+export const tidyExplorerDataProvider : TreeDataProvider<UriNode> = {
+    onDidChangeTreeData: onDidChangeTreeDataEmitter.event,
+    getTreeItem: function (element: UriNode): TreeItem | Thenable<TreeItem> {
+        throw new Error("Function not implemented.");
+    },
+    getChildren: function (element?: UriNode): ProviderResult<UriNode[]> {
+        throw new Error("Function not implemented.");
+    }
+}
+
+
 export class TidyExplorerTreeDataProvider implements TreeDataProvider<UriNode>{
-    private onDidChangeTreeDataEmitter: EventEmitter<UriNode | undefined> = new EventEmitter<UriNode | undefined>();
-    readonly onDidChangeTreeData: Event<void | UriNode | null | undefined> = this.onDidChangeTreeDataEmitter.event;
-    private readonly root: UriNode = UriNode.createRoot();
-    private selectors: Selector[] = [];
     public async addSelector(selector: Selector) {
         // add all files
         for (const uri of await selector.getFileUris()) {

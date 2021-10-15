@@ -3,13 +3,13 @@ import { Pocket } from "./pocket"
 import { Selector } from "./selector";
 
 
-type PocketViewMode = "files.exclude" | "tidy-explorer";
+
 type PocketSelectorItemCtx = (
     "files-x-set"|
     "files-x-unset" |
     "files-x-mixed"
 );
-let mode: PocketViewMode = "files.exclude";
+
 
 /**
  * TreeView item for pocket or selector
