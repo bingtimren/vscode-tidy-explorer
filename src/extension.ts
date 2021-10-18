@@ -2,9 +2,9 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { CMD_ADD_TO_FILE_EXCLUDES, CMD_ADD_TO_TIDY_VIEW, CMD_REMOVE_FROM_FILE_EXCLUDES, CMD_REMOVE_FROM_TIDY_VIEW, CONFIG_KEY, FILES_EXCLUDE_KEY, FILE_VIEW_ID, POCKET_VIEW_ID } from './id-keys';
-import { PocketTreeDataProvider } from "./pocket-view"
+import { PocketTreeDataProvider } from "./pocket-view/pocket-view"
 import { cmdAddToFilesExclude, cmdAddToTidyView, cmdRemoveFromFilesExclude, cmdRemoveFromTidyView } from "./pocket-view-commands";
-import { TidyExplorerTreeDataProvider } from './tidy-view';
+import { TidyExplorerTreeDataProvider } from './tidy-explorer/tidy-view';
 
 export const pocketViewDataProvider = new PocketTreeDataProvider([]);
 export const fileViewDataProvider = new TidyExplorerTreeDataProvider();

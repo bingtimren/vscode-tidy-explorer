@@ -92,9 +92,8 @@
 				{
 					"command": "tidyExplorer.removeFromTidyView",
 					"group": "inline",
-					"when": "view == tidyExplorerPockets"					
+					"when": "view == tidyExplorerPockets"
 				}
-
 			]
 		}
 	},

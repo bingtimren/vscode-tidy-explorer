@@ -1,23 +1,26 @@
 import { Uri, workspace } from "vscode";
-import { returnNextSeparatorAndName } from "./tidy-view";
+import { returnNextSeparatorAndName } from "./utils";
 
 export class UriNode {
-    readonly children: Object & { [key: string]: UriNode; } | undefined;
+    readonly children: Map<string, UriNode>  | undefined;
     private readonly fromSelectors: Set<string> = new Set<string>();
     public static createRoot() : UriNode {
         return new UriNode(null,null,"ROOT",false);
     }
+
     get isRoot():boolean {return this.uri === null};
     private constructor(readonly uri: Uri | null, fromSelector: string|null, readonly name: string, isLeaf: boolean) {
         if (!isLeaf) {
-            this.children = {};
+            this.children = new Map();
         };
         if (fromSelector != null) {
             this.fromSelectors.add(fromSelector);
         } // otherwise if fromSelector is null, meaning is the root
     }
 
-
+    public clear() {
+       
+    }
     /**
      * Add a uri into the subtree starting from this node.
      * Assumptions:
@@ -38,10 +41,10 @@ export class UriNode {
         // find out position of next separator and the name of next segment
         const [nextSeparator, name] = returnNextSeparatorAndName(relativePath, startPosition);
         // find out if the path has been created already
-        const existingChild = this.children![name];
+        const existingChild = this.children!.get(name);
         // otherwise create the child node
         const newChild = existingChild? undefined : this.addNewChild(fileUri, fromSelector, name, nextSeparator<0);
-        const theChild = existingChild || newChild;
+        const theChild = existingChild || newChild as UriNode;
         theChild.fromSelectors.add(fromSelector);
         if (nextSeparator<0) {
             return existingChild? undefined : this; // if an existing leaf node, no affection since just add a selector to an existing file, otherwise return this (where insertion starts)
@@ -60,7 +63,7 @@ export class UriNode {
             name,
             isLeaf // is leaf - if no more separator
         );
-        this.children![name] = newChild;
+        this.children!.set(name, newChild);
         return newChild;
     }
 
@@ -73,18 +76,18 @@ export class UriNode {
     public delFile(relativePath: string, startPosition: number): UriNode | undefined {
         const [nextSeparator, name] = returnNextSeparatorAndName(relativePath, startPosition);
         // check in case already deleted
-        const downPathChild = this.children![name];
+        const downPathChild = this.children!.get(name);
         if (! downPathChild) {
             return undefined; // already deleted, no effect
         }
         if (nextSeparator < 0) {
-            delete this.children![name]; // delete the leaf
+            this.children!.delete(name); // delete the leaf
             return this; // and this node is where deletion starts
         } else { // ask the child to delete 
             const affectedChild = downPathChild.delFile(relativePath, nextSeparator + 1);
             if (Object.keys(downPathChild.children!).length == 0) {
                 // left an empty down-path child, delete as well
-                delete this.children![name];
+                this.children!.delete(name);
                 return this;
             } else {
                 return affectedChild;
@@ -102,7 +105,7 @@ export class UriNode {
                 const childNodeAffected = (childNode.fromSelectors.size>0? childNode.delChildrenFromSelector(selector):undefined);
                 if (childNode.fromSelectors.size===0 || (childNode.children && (Object.keys(childNode.children).length === 0))) {
                     // for whatever reason the childNode now has no selector source, or is a non-leaf none-children node
-                    delete this.children![childKey];
+                    this.children!.delete(childKey);
                     nodeAffected = this; // "this" is where deletion occurs
                 } 
                 // if already a node is affected, then (if this child is affected, "this" is affected as the common root, otherwise if this child not affected, keep the same)

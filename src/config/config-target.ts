@@ -1,21 +1,5 @@
-import * as vscode from "vscode"
-/**
- * A selector is a GlobPattern (https://code.visualstudio.com/api/references/vscode-api#GlobPattern)
- */
 
-export type SelectorConfiguration = string;
-
-/**
- * A Pocket is a group of selectors for filtering files, for example, "configurations", "view controllers", "unit tests"
- */
-export type TidyExplorerConfiguration {
-    pockets: PocketConfiguration[]
-}
-
-export type PocketConfiguration {
-    name: string,
-    selectors: SelectorConfiguration[]
-}
+import * as vscode from "vscode";
 
 export type ConfigurationTarget = "Global" | "WorkSpace" | vscode.WorkspaceFolder;
 
@@ -34,6 +18,17 @@ export async function forEachConfigurationTarget(action:(target:ConfigurationTar
 
 export function getTargetKey(target: ConfigurationTarget): string {
     return typeof (target) === "string" ? target : target.uri.toString();
+}
+
+export function getTargetFromKey(targetKey: string): ConfigurationTarget {
+    return (targetKey === "Global" || targetKey === "WorkSpace" ?   targetKey 
+    : vscode.workspace.getWorkspaceFolder( vscode.Uri.parse(targetKey)) as vscode.WorkspaceFolder )
+}
+
+export function isConfigurationTarget (value: any) : value is ConfigurationTarget {
+    return (value === "Global" || value === "Workspace" || (
+        value && (typeof value.index === "number" && typeof value.name === "string" && value.uri instanceof vscode.Uri)
+    ))
 }
 
 export function getConfigurationFromTarget<ConfigValueType>(target: ConfigurationTarget, section: string) {

@@ -1,54 +1,3 @@
-import { TidyExplorerConfiguration, ConfigurationTarget, getConfigurationFromTarget, PocketConfiguration, getTargetKey, forEachConfigurationTarget  } from "./configuration"
-import * as vscode from "vscode"
-import { CONFIG_KEY, FILES_EXCLUDE_KEY } from "./id-keys";
-import { Selector } from "./selector";
-
-
-
-export class Pocket {
-
-    // Static, loading
-
-
-    /**
-     * reload from configurations
-     */
-    public static reload() {
-        Pocket.registry.clear();
-        forEachConfigurationTarget((target)=>{
-            Pocket.loadFromTarget(target);
-        })
-
-    }
-
-    public static readonly registry : Map<string, Map<string, Pocket>> = new Map();
-    private static loadFromTarget(target: ConfigurationTarget) {
-        const targetKey = getTargetKey(target);
-        const targetRegistry = Pocket.registry.get(targetKey) || (()=>{
-            const newMap = new Map<string, Pocket>();
-            Pocket.registry.set(targetKey, newMap);
-            return newMap;
-        })();
-        // load
-        const config = getConfigurationFromTarget<TidyExplorerConfiguration>(target, CONFIG_KEY);
-        for (const pocketConfig of config?.pockets || []) {
-            targetRegistry.set(pocketConfig.name, new Pocket(target, pocketConfig));
-        }
-
-    }
-
-   
-    // Instance Construction
-
-
-    private constructor(readonly target: ConfigurationTarget, readonly config: PocketConfiguration) {
-        // this.scopedFilesExcludeConfig = vscode.workspace.getConfiguration(FILES_EXCLUDE_KEY, this.workspaceFolder);
-        this.selectors = config.selectors.map((selectorConfig) => Selector.getSelector(target, selectorConfig))
-    }
-
-    // Instance Properties
-    public readonly selectors: readonly Selector[];
-
 
     // /**
     //  * Set all selectors in this pocket to hide / un-hide from the explorer (in files.exclude)
@@ -83,9 +32,5 @@ export class Pocket {
     //     const anyFalse = this.selectors.some(s => !s.isSetInFilesExcluded);
     //     return anyTrue ? (anyFalse ? undefined : true) : (anyFalse ? false : undefined);
     // }
-
-
-}
-
 
 

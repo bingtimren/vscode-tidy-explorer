@@ -1,13 +1,31 @@
 
 
 import * as vscode from "vscode";
-import { Selector } from "./selector";
+import { Selector } from "../config/selector";
+
 
 
 export class SelectorFileCache {
     // static
-    
-
+    // selectorIdStr : selector
+    public static registry: Map<string, SelectorFileCache> = new Map();    
+    public static async getInstance(selector: Selector) {
+        const existing = SelectorFileCache.registry.get(selector.idString);
+        if (!existing) {
+            const newInstance = new SelectorFileCache(selector);
+            await newInstance.init();
+            SelectorFileCache.registry.set(selector.idString, newInstance);
+            return newInstance
+        } else {
+            return existing
+        }
+    };
+    public static resetAndDisposeAll() {
+        for (const selectorCache of SelectorFileCache.registry.values()) {
+            selectorCache.dispose();
+        };
+        SelectorFileCache.registry.clear();
+    }
 
     // private properties
     private filesWatcher: vscode.FileSystemWatcher | undefined;
@@ -16,11 +34,11 @@ export class SelectorFileCache {
     private fileUriRegistry: Map<string, vscode.Uri> | undefined;
 
     // public properties
-    readonly idString: string;
-    readonly workspaceFolder: vscode.WorkspaceFolder | undefined;
-    readonly glob: string;
-    readonly onDidFileCreate: vscode.Event<vscode.Uri> = this.onDidFileCreateEmitter.event;
-    readonly onDidFileDelete: vscode.Event<vscode.Uri> = this.onDidFileDeleteEmitter.event;
+    public readonly idString: string;
+    public readonly workspaceFolder: vscode.WorkspaceFolder | undefined;
+    public readonly glob: string;
+    public readonly onDidFileCreate: vscode.Event<vscode.Uri> = this.onDidFileCreateEmitter.event;
+    public readonly onDidFileDelete: vscode.Event<vscode.Uri> = this.onDidFileDeleteEmitter.event;
 
     // constructor
     private constructor(selector: Selector) {
@@ -41,13 +59,15 @@ export class SelectorFileCache {
         return this.fileUriRegistry.values();
     };
 
-
+    public dispose() {
+        this.filesWatcher?.dispose();
+    }
 
     /**
      * first do a vscode.workspace.findFiles to populate the fileUris, then create the watcher, and
      * add / remove from the fileUris upon file creation / deletion
      */
-    public async init() {
+    private async init() {
         // the pattern for findFile, be a relative-pattern if selector is on a workspace folder, otherwise a global pattern
         const includePattern: vscode.GlobPattern = (this.workspaceFolder ?
             new vscode.RelativePattern(this.workspaceFolder, this.glob) :
