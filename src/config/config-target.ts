@@ -30,7 +30,7 @@ export function getTargetKey(target: ConfigurationTarget): string {
  * @returns the ConfigurationTarget
  */
 export function getTargetFromKey(targetKey: string): ConfigurationTarget {
-    return (targetKey === "Global" || targetKey === "WorkSpace" ?   targetKey 
+    return ((targetKey === "Global" || targetKey === "WorkSpace") ?   targetKey 
     : vscode.workspace.getWorkspaceFolder( vscode.Uri.parse(targetKey)) as vscode.WorkspaceFolder )
 }
 
@@ -40,8 +40,7 @@ export function getTargetFromKey(targetKey: string): ConfigurationTarget {
  * @returns 
  */
 export function isConfigurationTarget (value: any) : value is ConfigurationTarget {
-    return (value === "Global" || value === "Workspace" || (
-        value && (typeof value.index === "number" && typeof value.name === "string" && value.uri instanceof vscode.Uri)
+    return (value === "Global" || value === "WorkSpace" || (value && (typeof value.index === "number" && typeof value.name === "string" && value.uri instanceof vscode.Uri)
     ))
 }
 
