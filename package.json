@@ -70,22 +70,17 @@
 		"menus": {
 			"view/item/context": [
 				{
-					"command": "tidyExplorer.addToFileExcludes",
-					"group": "inline",
-					"when": "view == tidyExplorerPockets && viewItem =~ /files\\-x\\-(unset|mixed)/"
-				},
-				{
-					"command": "tidyExplorer.removeFromFileExcludes",
-					"group": "inline",
-					"when": "view == tidyExplorerPockets && viewItem =~ /files\\-x\\-(set|mixed)/"
-				},
-				{
-					"command": "tidyExplorer.addToTidyView",
+					"command": "tidyExplorer.setHidden",
 					"group": "inline",
 					"when": "view == tidyExplorerPockets"
 				},
 				{
-					"command": "tidyExplorer.removeFromTidyView",
+					"command": "tidyExplorer.setInactive",
+					"group": "inline",
+					"when": "view == tidyExplorerPockets"
+				},
+				{
+					"command": "tidyExplorer.setDisplay",
 					"group": "inline",
 					"when": "view == tidyExplorerPockets"
 				}
