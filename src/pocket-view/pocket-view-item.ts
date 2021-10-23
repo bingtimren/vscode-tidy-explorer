@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { isConfigurationTarget } from "../config/config-target";
+import { getTargetFromKey, isConfigurationTarget } from "../config/config-target";
 import { Pocket } from "../config/pocket";
 import { Selector } from "../config/selector";
 import { PocketViewNodeType } from "./pocket-view";
@@ -17,8 +17,10 @@ export class PocketViewItem extends vscode.TreeItem {
 
 
     private static getItemLabelAndCollapsibleState(item: PocketViewNodeType): [string, vscode.TreeItemCollapsibleState] {
-        if (isConfigurationTarget(item)) {
-            return [(typeof item === "string" ? `[${item}]` : item.name), vscode.TreeItemCollapsibleState.Collapsed];
+        if (typeof(item)==="string") {
+            // target key
+            const target = getTargetFromKey(item);
+            return [(typeof target === "string" ? `[${target}]` : target.name), vscode.TreeItemCollapsibleState.Collapsed];
         } else if (item instanceof Pocket) {
             return [item.config.name, vscode.TreeItemCollapsibleState.Collapsed];
         } else { // Selector
