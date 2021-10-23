@@ -1,25 +1,54 @@
 
 
-import * as vscode from "vscode";
-import { Selector } from "../config/selector";
+import { WorkspaceFolder, Uri, GlobPattern, RelativePattern, FileSystemWatcher, EventEmitter, Event, workspace, Disposable } from "vscode";
+
+export type SelectorGlobPattern = string | Omit<RelativePattern, "base"> & {
+    base: WorkspaceFolder
+};
+
+/**
+ * 
+ * @param glob 
+ * @returns a string equivalent of a GlobPattern
+ */
+export function getGlobIdString(glob: SelectorGlobPattern): string {
+    const base = typeof (glob) === "string" ? '[G]' : glob.base.uri.toString();
+    const pattern = typeof (glob) === "string" ? glob : glob.pattern;
+    return `${base}...${pattern}`
+}
 
 
-
+/**
+ * files and source of file create / delete event associated with a selector
+ */
 export class SelectorFileCache {
-    // static
-    // selectorIdStr : selector
-    public static registry: Map<string, SelectorFileCache> = new Map();    
-    public static async getInstance(selector: Selector) {
-        const existing = SelectorFileCache.registry.get(selector.idString);
+
+    /**
+     * {globIdStr : SelectorFileCache instance}  
+     **/
+    public static registry: Map<string, SelectorFileCache> = new Map();
+    /**
+     * 
+     * @param selector 
+     * @returns selector file cache instance, initiated and registered
+     */
+    public static async getInstance(glob : SelectorGlobPattern) {
+        const globIdString = getGlobIdString(glob);
+        const existing = SelectorFileCache.registry.get(globIdString);
         if (!existing) {
-            const newInstance = new SelectorFileCache(selector);
+            const newInstance = new SelectorFileCache(glob);
             await newInstance.init();
-            SelectorFileCache.registry.set(selector.idString, newInstance);
+            SelectorFileCache.registry.set(globIdString, newInstance);
             return newInstance
         } else {
             return existing
         }
     };
+    public static async getInstanceByGlobIdStr(globIdStr : string) {
+    }
+    /**
+     * dispose (un-watch) all file caches, call this after files.exclude changes
+     */
     public static resetAndDisposeAll() {
         for (const selectorCache of SelectorFileCache.registry.values()) {
             selectorCache.dispose();
@@ -27,67 +56,45 @@ export class SelectorFileCache {
         SelectorFileCache.registry.clear();
     }
 
+    // instance / non-static section
     // private properties
-    private filesWatcher: vscode.FileSystemWatcher | undefined;
-    private onDidFileCreateEmitter: vscode.EventEmitter<vscode.Uri> = new vscode.EventEmitter<vscode.Uri>();
-    private onDidFileDeleteEmitter: vscode.EventEmitter<vscode.Uri> = new vscode.EventEmitter<vscode.Uri>();
-    private fileUriRegistry: Map<string, vscode.Uri> | undefined;
+    private filesWatcher: FileSystemWatcher | undefined;
+    private onDidFileCreateEmitter: EventEmitter<Uri> = new EventEmitter<Uri>();
+    private onDidFileDeleteEmitter: EventEmitter<Uri> = new EventEmitter<Uri>();
+    private fileUriRegistry: Map<string, Uri> = new Map();
 
     // public properties
-    public readonly idString: string;
-    public readonly workspaceFolder: vscode.WorkspaceFolder | undefined;
-    public readonly glob: string;
-    public readonly onDidFileCreate: vscode.Event<vscode.Uri> = this.onDidFileCreateEmitter.event;
-    public readonly onDidFileDelete: vscode.Event<vscode.Uri> = this.onDidFileDeleteEmitter.event;
+    /**
+     * ([G]|uri)...glob   - identify the watcher glob (global or relative)
+     */
+    public readonly onDidFileCreate: Event<Uri> = this.onDidFileCreateEmitter.event;
+    public readonly onDidFileDelete: Event<Uri> = this.onDidFileDeleteEmitter.event;
 
     // constructor
-    private constructor(selector: Selector) {
-        this.workspaceFolder = typeof selector.target === "string" ? undefined : selector.target;
-        this.glob = selector.globPattern;
-        this.idString = `${this.workspaceFolder?.uri.toString() || '[G]'}...${this.glob}`;
-    }
-
-    // public methods
-    /**
-     * files selected by this selector - only defined after watchFiles() has been called
-     */
-    public async getFileUris() {
-        if (!this.fileUriRegistry) {
-            this.fileUriRegistry = new Map();
-            await this.init();
-        }
-        return this.fileUriRegistry.values();
-    };
-
-    public dispose() {
-        this.filesWatcher?.dispose();
+    private constructor(readonly watcherGlob: SelectorGlobPattern) {
+        // should call init() immediately after construction
     }
 
     /**
-     * first do a vscode.workspace.findFiles to populate the fileUris, then create the watcher, and
+     * first do a workspace.findFiles to populate the fileUris, then create the watcher, and
      * add / remove from the fileUris upon file creation / deletion
      */
-    private async init() {
-        // the pattern for findFile, be a relative-pattern if selector is on a workspace folder, otherwise a global pattern
-        const includePattern: vscode.GlobPattern = (this.workspaceFolder ?
-            new vscode.RelativePattern(this.workspaceFolder, this.glob) :
-            this.glob
-        );
-        const foundUris = await vscode.workspace.findFiles(includePattern);
+     private async init() {
+        const foundUris = await workspace.findFiles(this.watcherGlob as GlobPattern);
         for (const uri of (foundUris ? foundUris : [])) {
-            this.fileUriRegistry!.set(uri.toString(), uri);
+            this.fileUriRegistry.set(uri.toString(), uri);
         }
         // watch
-        this.filesWatcher = vscode.workspace.createFileSystemWatcher(includePattern, false, true, false);
+        this.filesWatcher = workspace.createFileSystemWatcher(this.watcherGlob as GlobPattern, false, true, false);
         this.filesWatcher.onDidCreate(async (uri) => {
-            // do a find to check if the uri is not filtered out by files.exclude etc.
-            const uriWorkspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-            const uriRelativePath = vscode.workspace.asRelativePath(uri, false);
-            const uriAsPattern = uriWorkspaceFolder ? new vscode.RelativePattern(uriWorkspaceFolder, uriRelativePath) : uri.path
-            const recheck = await vscode.workspace.findFiles(uriAsPattern, undefined, 1);
+            // do a re-find to check if the uri is not filtered out by files.exclude etc.
+            const uriWorkspaceFolder = workspace.getWorkspaceFolder(uri) as WorkspaceFolder; // should always find because watcher only watches files under workspace folder
+            const uriRelativePath = workspace.asRelativePath(uri, false);
+            const uriAsPattern = new RelativePattern(uriWorkspaceFolder, uriRelativePath);
+            const recheck = await workspace.findFiles(uriAsPattern, undefined, 1);
             if (recheck.length > 0) {
                 // passed re-check, add to uri registry and fire event
-                this.fileUriRegistry!.set(uri.toString(), uri);
+                this.fileUriRegistry.set(uri.toString(), uri);
                 this.onDidFileCreateEmitter.fire(uri);
             }
             // otherwise ignore create event
@@ -96,11 +103,27 @@ export class SelectorFileCache {
         // (vscode API document) Note that when watching for file changes such as '*/.js', notifications will not be sent when a parent folder is moved or deleted 
         // (this is a known limitation of the current implementation and may change in the future).
         this.filesWatcher.onDidDelete((uri) => {
-            const deleted = this.fileUriRegistry!.delete(uri.toString());
+            const deleted = this.fileUriRegistry.delete(uri.toString());
             if (deleted) {
                 this.onDidFileDeleteEmitter.fire(uri);
             }
         });
     };
+    
+    /**
+     * files selected by this selector - only defined after watchFiles() has been called
+     */
+    public getFileUris() {
+        return this.fileUriRegistry.values();
+    };
+
+    /**
+     * dispose watcher, clear registry, to be recycled
+     */
+    public dispose() {
+        this.filesWatcher?.dispose();
+        this.fileUriRegistry.clear();
+    }
+
 }
 

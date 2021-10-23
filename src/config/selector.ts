@@ -1,10 +1,11 @@
 import { ConfigurationTarget, forEachConfigurationTarget, getConfigurationFromTarget, getTargetKey } from "./config-target";
-import {SelectorConfiguration} from "./configuration-data-type"
+import { SelectorConfiguration } from "./configuration-data-type"
 import * as vscode from "vscode";
 import { globalState, workspaceState } from "../extension"
-import { rawListeners } from "process";
-import { FILES_EXCLUDE_KEY } from "../id-keys";
+import { FILES_EXCLUDE_KEY } from "./id-keys";
 import { defaultExcludePocketName, Pocket } from "./pocket";
+import { glob } from "glob";
+import { SelectorFileCache } from "../tidy-explorer/selector-file-cache";
 
 /**
  * A Selector for calling vscode.workspace.findFiles or, if only includePattern is provided,
@@ -13,26 +14,42 @@ import { defaultExcludePocketName, Pocket } from "./pocket";
 
 export type SelectorSetting = "hidden" | "inactive" | "display";
 
+export type SelectorEffectiveSetting = SelectorSetting | "display-by-inheritance";
+
 export class Selector {
 
     // Static
 
-    // registry : { targetIdStr : {glob : Selector}}
+    // registry : { configurationTarget-key : {glob : Selector}}
     private static registry: Map<string, Map<string, Selector>> = new Map();
-    public static getSelector(target: ConfigurationTarget, glob: string, create: boolean): Selector|undefined {
-        const targetRegistry = Selector.getTargetRegistry(target);
+    /**
+     * 
+     * @param target 
+     * @param glob 
+     * @param create : retrieve-only or retrieve-create
+     * @returns 
+     */
+
+    public static getSelector(target: ConfigurationTarget, glob: string, create: boolean): Selector | undefined {
+        const targetRegistry = Selector.getRegistryByTarget(target);
         const existingSelector = targetRegistry.get(glob);
-        return ((existingSelector || !create)? 
-                existingSelector :
-                (
-                    () => {
-                        const newSelector = new Selector(target, glob);
-                        targetRegistry.set(glob, newSelector);
-                        return newSelector;
-                    })()
-            );
-    }    
-    public static getTargetRegistry(target: ConfigurationTarget): Map<string, Selector>{
+        return ((existingSelector || !create) ?
+            existingSelector :
+            (
+                () => {
+                    const newSelector = new Selector(target, glob);
+                    targetRegistry.set(glob, newSelector);
+                    return newSelector;
+                })()
+        );
+    }
+
+    /**
+     * retrieve (or create) the selector registry
+     * @param target 
+     * @returns {glob : Selector}
+     */
+    public static getRegistryByTarget(target: ConfigurationTarget): Map<string, Selector> {
         const targetKey = getTargetKey(target);
         const existingTargetRegistry = Selector.registry.get(targetKey);
         if (existingTargetRegistry) {
@@ -49,18 +66,21 @@ export class Selector {
     // selector state comes from two sources:
     //   "hidden" state - all selectors with matching "files.exclude" setting is in hidden state
     //   "display" state - stored in corresponding persistent storage, however "hidden" takes priority
+    //   "inactive" - otherwise
 
     /**
+     * selectors' "hidden" state comes from "files.exclude" setting
+     * 
      * for each configuration target, do:
      *    for each globs in files.exclude, do:
      *       set the corresponding selector's state as "hidden",
      *       if no corresponding selector, create "default excluded files" pocket and set selector in
      */
     public static async loadStateHiddenFromFilesExclude() {
-        await forEachConfigurationTarget(async (target)=>{
-            const filesExclude = getConfigurationFromTarget<{[glob:string]:boolean}>(target, FILES_EXCLUDE_KEY);
+        await forEachConfigurationTarget(async (target) => {
+            const filesExclude = getConfigurationFromTarget<{ [glob: string]: boolean }>(target, FILES_EXCLUDE_KEY);
             const defaultExcludeSelectors: SelectorConfiguration[] = [];
-            for (const glob of Object.keys(filesExclude||{})){
+            for (const glob of Object.keys(filesExclude || {})) {
                 const selector = Selector.getSelector(target, glob, false);
                 if (selector) {
                     await selector.setSetting("hidden");
@@ -68,13 +88,15 @@ export class Selector {
                     defaultExcludeSelectors.push(glob);
                 }
             }
-            if (defaultExcludeSelectors.length>0) {
+            if (defaultExcludeSelectors.length > 0) {
                 Pocket.addDefaultExcludePocket(target, defaultExcludeSelectors)
             }
         })
     }
 
     /**
+     * selectors' "display" state comes from persistent storage
+     * 
      * for each target:
      *      get storage from target (global or workspace)
      *      get all keys from storage as a set (selector.idString)
@@ -87,92 +109,98 @@ export class Selector {
      *          remove from storage
      */
     public static async loadStateDisplayFromStorage() {
-        await forEachConfigurationTarget(async (target)=>{
+        await forEachConfigurationTarget(async (target) => {
             const storage = Selector.getStorageFromTarget(target);
-            const registry = Selector.getTargetRegistry(target);
-            const keys = new Set<string>();
+            const registry = Selector.getRegistryByTarget(target);
+            const storageKeys = new Set<string>();
             for (const key in storage.keys) {
-                keys.add(key);
+                storageKeys.add(key);
             }
-            for (const [glob, selector] of registry.entries()){
-                const existInStorage = keys.delete(selector.idString);
+            // check all registry entries, deletes key from storage keys, and set 'display' state
+            for (const [glob, selector] of registry.entries()) {
+                const existInStorage = storageKeys.delete(selector.idString);
                 if (existInStorage) {
-                    if (selector.getSetting()!=='hidden') {
+                    if (selector.getSetting() !== 'hidden') {
                         // set without triggering persistence
                         selector.setting = "display"
+                    } else {
+                        await storage.update(selector.idString, undefined);
                     }
                 }
             }
             // remove remaining keys from storage
-            for (const key of keys) {
+            for (const key of storageKeys) {
                 await storage.update(key, undefined);
             }
         });
     }
 
-/**
- * first compares selectors settings with actual files.exclude settings, 
- * if no need to set, return false, otherwise set the settings and return true
- */
- public static async setFilesExclude(): Promise<boolean> {
-    let filesExcludeWasSet = false;
-    await forEachConfigurationTarget(async (target) => {
-        const filesExcludeSetting = getConfigurationFromTarget<Object & { [glob: string]: boolean }>(target, FILES_EXCLUDE_KEY);
-        // get selectors which setting (not necessarily effective setting) is "hidden"
-        const hiddenSelectors = Array.from(Selector.getTargetRegistry(target).values()).filter((selector) => {
-            selector.getSetting() === "hidden";
-        });
-        if (!Selector.compareFilesExcludesWithSelectors(filesExcludeSetting, hiddenSelectors)) {
-            // convert array of hidden selectors into files.exclude setting value object
-            const targetFilesExcludeSetting = hiddenSelectors.reduce(
-                (preValue, selector) => {
-                    preValue[selector.globPattern] = true;
-                    return preValue;
-                }, {} as { [glob: string]: boolean }
-            )
-            // do setting
-            const scopedConfig = vscode.workspace.getConfiguration(
-                undefined, typeof target === "string" ? undefined : target);
-            const vscodeConfigTarget: vscode.ConfigurationTarget = (
-                target === "Global" ? vscode.ConfigurationTarget.Global :
-                    (target === "WorkSpace" ? vscode.ConfigurationTarget.Workspace : vscode.ConfigurationTarget.WorkspaceFolder)
-            );
-            await scopedConfig.update(FILES_EXCLUDE_KEY, targetFilesExcludeSetting, vscodeConfigTarget);
-            filesExcludeWasSet = true;
-        }
-    });
-    return filesExcludeWasSet;
-}
-
-/**
- * 
- * @param filesExcludeSetting 
- * @param hiddenSelectors 
- * @returns if filesExcludeSetting matches hiddenSelectors exactly
- */
- private static compareFilesExcludesWithSelectors(
-    filesExcludeSetting: (Object & { [glob: string]: boolean }) | undefined,
-    hiddenSelectors: Selector[]): boolean {
-    if ((filesExcludeSetting ? Object.getOwnPropertyNames(filesExcludeSetting).length : 0) === hiddenSelectors.length) {
-        // if both has same size, further examine if all selectors' globs are present 
-        for (const selector of hiddenSelectors) {
-            if (!(filesExcludeSetting!.hasOwnProperty(selector.globPattern))) {
-                return false
+    /**
+     * this updates files.exclude settings from selectors' states
+     * 
+     * first compares selectors settings with actual files.exclude settings, 
+     * if no need to set, return false, otherwise set the settings and return true
+     * 
+     * @returns if any files.exclude setting is actually updated
+     */
+    public static async setFilesExclude(): Promise<boolean> {
+        let filesExcludeWasSet = false;
+        await forEachConfigurationTarget(async (target) => {
+            const filesExcludeSetting = getConfigurationFromTarget<Object & { [glob: string]: boolean }>(target, FILES_EXCLUDE_KEY);
+            // get selectors which setting (not necessarily effective setting) is "hidden"
+            const hiddenSelectors = Array.from(Selector.getRegistryByTarget(target).values()).filter((selector) => {
+                selector.getSetting() === "hidden";
+            });
+            if (!Selector.compareFilesExcludesWithSelectors(filesExcludeSetting, hiddenSelectors)) {
+                // convert array of hidden selectors into files.exclude setting value object
+                const targetFilesExcludeSetting = hiddenSelectors.reduce(
+                    (preValue, selector) => {
+                        preValue[selector.globPattern] = true;
+                        return preValue;
+                    }, {} as { [glob: string]: boolean }
+                )
+                // do setting
+                const scopedConfig = vscode.workspace.getConfiguration(
+                    undefined, typeof target === "string" ? undefined : target);
+                const vscodeConfigTarget: vscode.ConfigurationTarget = (
+                    target === "Global" ? vscode.ConfigurationTarget.Global :
+                        (target === "WorkSpace" ? vscode.ConfigurationTarget.Workspace : vscode.ConfigurationTarget.WorkspaceFolder)
+                );
+                await scopedConfig.update(FILES_EXCLUDE_KEY, targetFilesExcludeSetting, vscodeConfigTarget);
+                filesExcludeWasSet = true;
             }
-        };
-        return true;
-    } else {
-        return false
+        });
+        return filesExcludeWasSet;
     }
-}
+
+    /**
+     * 
+     * @param filesExcludeSetting 
+     * @param hiddenSelectors 
+     * @returns if filesExcludeSetting matches hiddenSelectors exactly
+     */
+    private static compareFilesExcludesWithSelectors(
+        filesExcludeSetting: (Object & { [glob: string]: boolean }) | undefined,
+        hiddenSelectors: Selector[]): boolean {
+        if ((filesExcludeSetting ? Object.getOwnPropertyNames(filesExcludeSetting).length : 0) === hiddenSelectors.length) {
+            // if both has same size, further examine if all selectors' globs are present 
+            for (const selector of hiddenSelectors) {
+                if (!(filesExcludeSetting!.hasOwnProperty(selector.globPattern))) {
+                    return false
+                }
+            };
+            return true;
+        } else {
+            return false
+        }
+    }
 
 
     static getIdString(target: ConfigurationTarget, glob: string): string {
         return typeof (target) === "string" ? `[${target}]...${glob}` : `[${target.uri.toString()}]...${glob}`;
     }
-
-    private static getStorageFromTarget(target: ConfigurationTarget) : vscode.Memento { 
-        return target === "Global" ? globalState! : workspaceState! 
+    private static getStorageFromTarget(target: ConfigurationTarget): vscode.Memento {
+        return target === "Global" ? globalState! : workspaceState!
     }
     // Instance Construction
 
@@ -181,7 +209,7 @@ export class Selector {
      * i.e. hidden in explorer
      */
     readonly idString: string;
-    private setting : SelectorSetting;
+    private setting: SelectorSetting;
 
     private constructor(readonly target: ConfigurationTarget, readonly globPattern: SelectorConfiguration) {
         this.idString = Selector.getIdString(target, globPattern);
@@ -189,7 +217,11 @@ export class Selector {
     };
 
     // Instance Setting
-    public getSetting(): SelectorSetting { return this.setting};
+    public getSetting(): SelectorSetting { return this.setting };
+    /**
+     * set setting, however only persist "display" setting
+     * @param setting 
+     */
     public async setSetting(setting: SelectorSetting) {
         this.setting = setting;
         if (setting === 'display') {
@@ -198,4 +230,36 @@ export class Selector {
             await Selector.getStorageFromTarget(this.target).update(this.idString, undefined);
         }
     }
+    public getEffectiveSetting() : SelectorEffectiveSetting {
+        if (this.target === "Global") {
+            return this.getSetting(); // no overriding issue
+        }
+        const globalParentSetting = Selector.getSelector("Global", this.globPattern, false)?.getSetting();
+        if (this.target === "WorkSpace") {
+            // rule 1: "hidden" overrides
+            if (globalParentSetting==="hidden" || this.getSetting() === "hidden") {
+                return "hidden"
+            };
+            // otherwise either one "display" then "display"
+            if (globalParentSetting==="display") {
+                return "display-by-inheritance";
+            }; // no need for workspace-level "display" - the same
+            // global undefined or inactive
+            return this.getSetting();
+        }
+        // this.target is workspace folder
+        const workspaceLevelEffectiveSetting = (Selector.getSelector("WorkSpace", this.globPattern, false)?.getEffectiveSetting()) || globalParentSetting;
+        // rule 1: if workspace-level hidden - hidden
+        if (workspaceLevelEffectiveSetting === "hidden") return "hidden"; // hidden setting overrides 
+        // rule 2: if workspace-level display, depends on self (more specific)
+        if (workspaceLevelEffectiveSetting === "display" || workspaceLevelEffectiveSetting === "display-by-inheritance") {
+            return (this.getSetting()==="hidden"? "hidden" : "display-by-inheritance"); // self "inactive" effectively "display"
+        };
+        // rule 3: if workspace-level inactive or no selector, use self setting
+        return this.getSetting();
+    }
+    public getWorkspaceFolder() : vscode.WorkspaceFolder | undefined {
+        return typeof (this.target) === "string" ? undefined : this.target;
+    }
+
 };

@@ -1,6 +1,6 @@
 import { ConfigurationTarget, getConfigurationFromTarget, getTargetKey, forEachConfigurationTarget } from "./config-target"
 import { TidyExplorerConfiguration, PocketConfiguration } from "./configuration-data-type"
-import { CONFIG_KEY } from "../id-keys";
+import { CONFIG_KEY } from "./id-keys;
 import { Selector } from "./selector";
 
 export const defaultExcludePocketName = "Default Excludes";
@@ -9,7 +9,7 @@ export class Pocket {
 
     // Static, loading
     /**
-     * reload from configurations,
+     * reload from configurations, without initiating the selector states
      */
     public static reload() {
         Pocket.registry.clear();
@@ -19,9 +19,21 @@ export class Pocket {
         })
 
     }
-
+    /**
+     * {
+     *     [configurationTarget key] : {
+     *          [name]: Pocket
+     *      }
+     * }
+     */
     public static readonly registry: Map<string, Map<string, Pocket>> = new Map();
 
+    /**
+     * default exclude pocket represents those globs found in files.exclude settings in a target, but does not correspond to any selector in any pocket
+     * these globs are set by default or by user but tidy explorer would only display but not control it
+     * @param target 
+     * @param globs 
+     */
     public static addDefaultExcludePocket(target: ConfigurationTarget, globs: string[]) {
         const targetPocketRegistry = Pocket.getPocketRegistry(target);
         targetPocketRegistry.set(defaultExcludePocketName,
@@ -31,7 +43,7 @@ export class Pocket {
             })
         )
     }
-
+    
     private static getPocketRegistry(target: ConfigurationTarget) {
         // obtain registry instance
         const targetKey = getTargetKey(target);
@@ -51,10 +63,8 @@ export class Pocket {
 
     }
 
-
     // Instance Construction
     private constructor(readonly target: ConfigurationTarget, readonly config: PocketConfiguration) {
-        // this.scopedFilesExcludeConfig = vscode.workspace.getConfiguration(FILES_EXCLUDE_KEY, this.workspaceFolder);
         this.selectors = config.selectors.map((selectorConfig) => Selector.getSelector(target, selectorConfig, true)!)
     }
 

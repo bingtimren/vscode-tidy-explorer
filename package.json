@@ -52,24 +52,19 @@
 		},
 		"commands": [
 			{
-				"command": "tidyExplorer.addToFileExcludes",
+				"command": "tidyExplorer.setHidden",
 				"title": "Hide in explorer",
 				"icon": "$(eye-closed)"
 			},
 			{
-				"command": "tidyExplorer.removeFromFileExcludes",
+				"command": "tidyExplorer.setInactive",
 				"title": "Un-hide in explorer",
 				"icon": "$(eye)"
 			},
 			{
-				"command": "tidyExplorer.addToTidyView",
+				"command": "tidyExplorer.setDisplay",
 				"title": "Show in Tidy Explorer",
 				"icon": "$(add)"
-			},
-			{
-				"command": "tidyExplorer.removeFromTidyView",
-				"title": "Remove from Tidy Explorer",
-				"icon": "$(remove)"
 			}
 		],
 		"menus": {
