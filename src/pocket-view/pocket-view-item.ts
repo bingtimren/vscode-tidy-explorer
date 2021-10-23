@@ -18,7 +18,7 @@ export class PocketViewItem extends vscode.TreeItem {
 
     private static getItemLabelAndCollapsibleState(item: PocketViewNodeType): [string, vscode.TreeItemCollapsibleState] {
         if (isConfigurationTarget(item)) {
-            return [(typeof item === "string" ? `[${item}` : item.name), vscode.TreeItemCollapsibleState.Collapsed];
+            return [(typeof item === "string" ? `[${item}]` : item.name), vscode.TreeItemCollapsibleState.Collapsed];
         } else if (item instanceof Pocket) {
             return [item.config.name, vscode.TreeItemCollapsibleState.Collapsed];
         } else { // Selector

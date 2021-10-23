@@ -54,13 +54,13 @@ export class Pocket {
         })();
     }
     private static loadFromTarget(target: ConfigurationTarget) {
-        const targetRegistry = Pocket.getPocketRegistry(target);
-        // load pocket from configuration from target
         const config = getConfigurationFromTarget<TidyExplorerConfiguration>(target, TIDY_EXPLORER_CONFIG_KEY);
-        for (const pocketConfig of config?.pockets || []) {
-            targetRegistry.set(pocketConfig.name, new Pocket(target, pocketConfig));
+        if (config) {
+            const targetRegistry = Pocket.getPocketRegistry(target);
+            for (const pocketConfig of config?.pockets || []) {
+                targetRegistry.set(pocketConfig.name, new Pocket(target, pocketConfig));
+            }
         }
-
     }
 
     // Instance Construction
