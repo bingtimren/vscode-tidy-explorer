@@ -1,20 +1,17 @@
 
 
 import { WorkspaceFolder, Uri, GlobPattern, RelativePattern, FileSystemWatcher, EventEmitter, Event, workspace, Disposable } from "vscode";
-
-export type SelectorGlobPattern = string | Omit<RelativePattern, "base"> & {
-    base: WorkspaceFolder
-};
+import { Selector } from "../config/selector";
+import { getWatcherGlob } from "./tidy-view";
 
 /**
  * 
  * @param glob 
  * @returns a string equivalent of a GlobPattern
  */
-export function getGlobIdString(glob: SelectorGlobPattern): string {
-    const base = typeof (glob) === "string" ? '[G]' : glob.base.uri.toString();
-    const pattern = typeof (glob) === "string" ? glob : glob.pattern;
-    return `${base}...${pattern}`
+export function getGlobIdString(selector:Selector): string {
+    const base = selector.getWorkspaceFolder();
+    return `${base?base.uri.toString():'[G]'}...${selector.globPattern}`
 }
 
 
@@ -32,11 +29,11 @@ export class SelectorFileCache {
      * @param selector 
      * @returns selector file cache instance, initiated and registered
      */
-    public static async getInstance(glob : SelectorGlobPattern) {
-        const globIdString = getGlobIdString(glob);
+    public static async getInstance(selector: Selector) {
+        const globIdString = getGlobIdString(selector);
         const existing = SelectorFileCache.registry.get(globIdString);
         if (!existing) {
-            const newInstance = new SelectorFileCache(glob);
+            const newInstance = new SelectorFileCache(getWatcherGlob(selector));
             await newInstance.init();
             SelectorFileCache.registry.set(globIdString, newInstance);
             return newInstance
@@ -71,7 +68,7 @@ export class SelectorFileCache {
     public readonly onDidFileDelete: Event<Uri> = this.onDidFileDeleteEmitter.event;
 
     // constructor
-    private constructor(readonly watcherGlob: SelectorGlobPattern) {
+    private constructor(readonly watcherGlob: GlobPattern) {
         // should call init() immediately after construction
     }
 

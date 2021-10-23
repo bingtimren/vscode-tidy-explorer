@@ -1,8 +1,8 @@
 
-import { Disposable, EventEmitter, ProviderResult, RelativePattern, TreeDataProvider, TreeItem, TreeItemCollapsibleState, Uri, workspace, WorkspaceFolder } from "vscode";
+import { Disposable, EventEmitter, GlobPattern, ProviderResult, RelativePattern, TreeDataProvider, TreeItem, TreeItemCollapsibleState, Uri, workspace, WorkspaceFolder } from "vscode";
 import { forEachConfigurationTarget } from "../config/config-target";
 import { Selector } from "../config/selector";
-import { getGlobIdString, SelectorFileCache, SelectorGlobPattern } from "./selector-file-cache";
+import { getGlobIdString, SelectorFileCache } from "./selector-file-cache";
 import { UriNode } from "./tidy-view-node";
 
 // other data and values
@@ -56,15 +56,13 @@ export function clear() {
 export async function reload() {
     const existingGlobIds = new Set(subscriptions.keys());
     await forEachConfigurationTarget(async (target) => {
-        const  knownWorkspaceFolder = typeof(target)==="string"?undefined:target;
         const targetSelectorRegistry = Selector.getRegistryByTarget(target);
         for (const selector of targetSelectorRegistry.values()) {
-            const selectorGlob = getWatcherGlob(selector);
-            const selectorGlobIdStr = getGlobIdString(selectorGlob);
+            const selectorGlobIdStr = getGlobIdString(selector);
             const isSubscribed = existingGlobIds.delete(selectorGlobIdStr);
             if (selector.getEffectiveSetting() === "display") { // if being "display-by-inheritance" no action is needed
                 if (!isSubscribed) {
-                    addSelector(knownWorkspaceFolder, selectorGlobIdStr);
+                    addSelector(selector);
                 } // else nothing to do
             } else {
                 if (isSubscribed) {
@@ -89,16 +87,17 @@ export async function reload() {
 
 
 // private manipulation functions
-function getWatcherGlob(selector: Selector): SelectorGlobPattern {
+export function getWatcherGlob(selector: Selector): GlobPattern {
     return ((selector.target === "Global" || selector.target === "WorkSpace")
         ? selector.globPattern
-        : (new RelativePattern(selector.target, selector.globPattern)) as unknown as SelectorGlobPattern
+        : (new RelativePattern(selector.target, selector.globPattern))
     );
 }
-async function addSelector(knownWorkspaceFolder: WorkspaceFolder|undefined, glob: SelectorGlobPattern) {
-    const globIdStr = getGlobIdString(glob);
+async function addSelector(selector: Selector) {
+    const globIdStr = getGlobIdString(selector);
+    const knownWorkspaceFolder = selector.getWorkspaceFolder();
     if (!subscriptions.has(globIdStr)) {
-        const cache = await SelectorFileCache.getInstance(glob);
+        const cache = await SelectorFileCache.getInstance(selector);
         for (const uri of cache.getFileUris()) {
             addFileWithoutFireEvent(uri, knownWorkspaceFolder, globIdStr);
         }
