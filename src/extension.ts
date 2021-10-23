@@ -6,9 +6,17 @@ import * as controller from "./control/controller"
 import {pocketViewDataProvider} from "./pocket-view/pocket-view"
 import {tidyExplorerDataProvider} from "./tidy-explorer/tidy-view"
 
+
+export let globalState : vscode.Memento | undefined = undefined;
+export let workspaceState : vscode.Memento | undefined = undefined;
+
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+	// set the exported states
+	globalState = context.globalState;
+	workspaceState = context.workspaceState;
+		
 	// register views
 	const pocketView = vscode.window.createTreeView(key.POCKET_VIEW_ID, {
 		treeDataProvider: pocketViewDataProvider

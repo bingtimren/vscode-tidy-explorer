@@ -1,6 +1,6 @@
 import { ConfigurationTarget, getConfigurationFromTarget, getTargetKey, forEachConfigurationTarget } from "./config-target"
 import { TidyExplorerConfiguration, PocketConfiguration } from "./configuration-data-type"
-import { CONFIG_KEY } from "./id-keys;
+import {TIDY_EXPLORER_CONFIG_KEY} from "./id-keys"
 import { Selector } from "./selector";
 
 export const defaultExcludePocketName = "Default Excludes";
@@ -56,7 +56,7 @@ export class Pocket {
     private static loadFromTarget(target: ConfigurationTarget) {
         const targetRegistry = Pocket.getPocketRegistry(target);
         // load pocket from configuration from target
-        const config = getConfigurationFromTarget<TidyExplorerConfiguration>(target, CONFIG_KEY);
+        const config = getConfigurationFromTarget<TidyExplorerConfiguration>(target, TIDY_EXPLORER_CONFIG_KEY);
         for (const pocketConfig of config?.pockets || []) {
             targetRegistry.set(pocketConfig.name, new Pocket(target, pocketConfig));
         }
