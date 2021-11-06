@@ -18,7 +18,7 @@ export class Selector {
     /**
      * clear registry
      */
-    static reload() {
+    static clear() {
         Selector.registry.clear();
     }
 
@@ -89,24 +89,35 @@ export class Selector {
      * selectors' "hidden" state comes from "files.exclude" setting
      * 
      * for each configuration target, do:
-     *    for each globs in files.exclude, do:
-     *       set the corresponding selector's state as "hidden",
+     *    fetch the globs in files.exclude as a set
+     *    get the selectors
+     *    for each the selectors, do:
+     *       remove from files.exclude globs from the set
+     *       if selector in files.exclude:
+     *          set "hidden"
+     *       else
+     *          if was "hidden" - change to "inactive"
+     *       
+     *    for remaining globs in files.exclude set, do:
      *       if no corresponding selector, create "default excluded files" pocket and set selector in
      */
     public static async loadStateHiddenFromFilesExclude() {
         await forEachConfigurationTarget(async (target) => {
-            const filesExclude = getConfigurationFromTarget<{ [glob: string]: boolean }>(target, FILES_EXCLUDE_KEY);
-            const defaultExcludeSelectors: SelectorConfiguration[] = [];
-            for (const glob of Object.keys(filesExclude || {})) {
-                const selector = Selector.getSelector(target, glob, false);
-                if (selector) {
-                    await selector.setSetting("hidden");
+            const filesExclude = new Set(Object.keys(getConfigurationFromTarget<{ [glob: string]: boolean }>(target, FILES_EXCLUDE_KEY)||{}));
+            for (const [glob, selector] of Selector.getRegistryByTarget(target)){
+                const excluded = filesExclude.delete(glob);
+                if (excluded) {
+                    if (selector.getSetting() != "hidden") {
+                        await selector.setSetting("hidden");
+                    }
                 } else {
-                    defaultExcludeSelectors.push(glob);
+                    if (selector.getSetting() === "hidden") {
+                        await selector.setSetting("inactive");
+                    };
                 }
-            }
-            if (defaultExcludeSelectors.length > 0) {
-                Pocket.addDefaultExcludePocket(target, defaultExcludeSelectors)
+            }            
+            if (filesExclude.size > 0) {
+                Pocket.addDefaultExcludePocket(target, Array.from(filesExclude));
             }
         })
     }

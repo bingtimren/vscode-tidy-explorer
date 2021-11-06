@@ -34,8 +34,25 @@ export class PocketViewItem extends vscode.TreeItem {
         }
         else if (this.item instanceof Selector) {
             // selector
+            this.tooltip = "a glob pattern";
+            switch(this.item.getEffectiveSetting()) {
+                case "display-by-inheritance": this.tooltip = "Overridden"
+                case "display": 
+                    this.iconPath = new vscode.ThemeIcon("eye", new vscode.ThemeColor("foreground"));
+                    break;
+                case "hidden":
+                case "hidden-by-default":
+                    this.iconPath = new vscode.ThemeIcon("error", new vscode.ThemeColor("foreground"));
+                    break;
+                case "inactive":
+                    
+                
+            }
+           
         } else {
             // pocket
+            this.iconPath = new vscode.ThemeIcon("folder");
+            
         }
     }
 

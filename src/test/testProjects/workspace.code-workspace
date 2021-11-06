@@ -19,9 +19,10 @@
 			}
 		],
 		"files.exclude": {
+			"src/**/*.js":true,
 			"existing": true,
 			"workspace-existing": true,
-			"src/**/*.js":true
+
 		},
 	}
 }

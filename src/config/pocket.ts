@@ -14,11 +14,12 @@ export class Pocket {
      */
     public static reload() {
         Pocket.registry.clear();
+        Selector.clear();
         // load pockets from each target
         forEachConfigurationTarget((target) => {
             Pocket.loadFromTarget(target);
         })
-        Selector.reload();
+
     }
 
     /**

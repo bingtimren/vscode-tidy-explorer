@@ -53,18 +53,18 @@
 		"commands": [
 			{
 				"command": "tidyExplorer.setHidden",
-				"title": "Hide in explorer",
-				"icon": "$(eye-closed)"
+				"title": "Hide in Explorer",
+				"icon": "$(stop)"
 			},
 			{
 				"command": "tidyExplorer.setInactive",
-				"title": "Un-hide in explorer",
-				"icon": "$(eye)"
+				"title": "Un-use",
+				"icon": "$(ellipsis)"
 			},
 			{
 				"command": "tidyExplorer.setDisplay",
 				"title": "Show in Tidy Explorer",
-				"icon": "$(add)"
+				"icon": "$(eye)"
 			}
 		],
 		"menus": {
