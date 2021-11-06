@@ -10,15 +10,18 @@
 	"settings": {
 		"tidyExplorer.pockets": [
 			{
-				"name": "Workspace JS & MAP",
+				"name": "Workspace Settings",
 				"selectors": [
 					"src/**/*.js",
-					"src/**/*.map"
+					"src/**/*.map",
+					"workspace-settings"
 				]
 			}
 		],
 		"files.exclude": {
-			"existing": true
+			"existing": true,
+			"workspace-existing": true,
+			"src/**/*.js":true
 		},
 	}
 }

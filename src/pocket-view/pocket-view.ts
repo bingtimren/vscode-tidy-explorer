@@ -7,7 +7,7 @@ import { PocketViewItem } from "./pocket-view-item";
 
 export type PocketViewNodeType = string | Pocket | Selector;
 
-const onDidChangeEmitter = new vscode.EventEmitter<void>();
+export const onDidChangeEmitter = new vscode.EventEmitter<void>();
 
 export const pocketViewDataProvider : vscode.TreeDataProvider<PocketViewNodeType> = {
     onDidChangeTreeData: onDidChangeEmitter.event,

@@ -6,6 +6,7 @@
 import { Selector, SelectorSetting } from "../config/selector";
 import { Pocket } from "../config/pocket";
 import {reload as tidyViewReload, clear as tidyViewClear} from "../tidy-explorer/tidy-view"
+import {onDidChangeEmitter as pocketViewChangeEmitter} from "../pocket-view/pocket-view"
 import { ConfigurationChangeEvent } from "vscode";
 import { TIDY_EXPLORER_CONFIG_KEY, FILES_EXCLUDE_KEY } from "../config/id-keys";
 import { SelectorFileCache } from "../tidy-explorer/selector-file-cache";
@@ -26,16 +27,27 @@ function itemSelectors(item: Pocket | Selector): readonly Selector[] {
  * On extension startup or configuration change
  */
 export async function startUp(event?: ConfigurationChangeEvent) {
-    // if files.exclude changes
+    if (event && (!
+        (event.affectsConfiguration(FILES_EXCLUDE_KEY) || event.affectsConfiguration(TIDY_EXPLORER_CONFIG_KEY))
+    )) {
+        return; // some config changed but does not affect tidy explorer
+    }
+    // if files.exclude changes, reset tidy view and the file caches
     if (event && event.affectsConfiguration(FILES_EXCLUDE_KEY)) {
         tidyViewClear();
         SelectorFileCache.resetAndDisposeAll();
     };
+    // partially or fully reload pocket
     if (event === undefined || event && event.affectsConfiguration(TIDY_EXPLORER_CONFIG_KEY)) {
         Pocket.reload(); // otherwise because config change and only affects files.exclude
+    } else {
+        Pocket.clearDefaultHidden();
     };
     await Selector.loadStateHiddenFromFilesExclude();
     await Selector.loadStateDisplayFromStorage();
+    if (event) {
+        pocketViewChangeEmitter.fire();
+    }
     await tidyViewReload();
 };
 

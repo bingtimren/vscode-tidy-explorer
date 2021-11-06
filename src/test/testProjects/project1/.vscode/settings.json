@@ -1,9 +1,10 @@
 {
     "tidyExplorer.pockets": [
         {
-            "name": "Project 1 JS",
+            "name": "Project 1 Settings",
             "selectors": [
-                "**/*.js"
+                "**/*.js",
+                "project1-settings"
             ]
         }
     ],

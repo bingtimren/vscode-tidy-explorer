@@ -3,20 +3,37 @@ import { SelectorConfiguration } from "./configuration-data-type"
 import * as vscode from "vscode";
 import { globalState, workspaceState } from "../extension"
 import { FILES_EXCLUDE_KEY } from "./id-keys";
-import { defaultExcludePocketName, Pocket } from "./pocket";
-import { glob } from "glob";
-import { SelectorFileCache } from "../tidy-explorer/selector-file-cache";
+import { Pocket } from "./pocket";
 
 /**
  * A Selector for calling vscode.workspace.findFiles or, if only includePattern is provided,
  * for added into "files.exclude" settings
  */
 
-export type SelectorSetting = "hidden" | "inactive" | "display";
+export type SelectorSetting = "hidden" | "inactive" | "display" | "hidden-by-default";
 
 export type SelectorEffectiveSetting = SelectorSetting | "display-by-inheritance";
 
 export class Selector {
+    /**
+     * clear registry
+     */
+    static reload() {
+        Selector.registry.clear();
+    }
+
+    /**
+     * clear all "default hidden" selectors
+     */
+    static clearDefaultHiddenSelectors() {
+        Selector.registry.forEach((subRegistry, targetKey)=>{
+            subRegistry.forEach((selector, key)=>{
+                if (selector.getSetting() === "hidden-by-default") {
+                    subRegistry.delete(key);
+                }
+            })
+        })
+    }
 
     // Static
 
@@ -229,6 +246,12 @@ export class Selector {
         } else {
             await Selector.getStorageFromTarget(this.target).update(this.idString, undefined);
         }
+    }
+    public setDefaultHidden() {
+        if (this.setting !== "inactive") {
+            throw new Error("Hidden-by-default should transit from 'inactive' only");
+        }
+        this.setting = "hidden-by-default";
     }
     public getEffectiveSetting() : SelectorEffectiveSetting {
         if (this.target === "Global") {

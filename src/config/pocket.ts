@@ -1,6 +1,7 @@
+import { SelectorFileCache } from "../tidy-explorer/selector-file-cache";
 import { ConfigurationTarget, getConfigurationFromTarget, getTargetKey, forEachConfigurationTarget } from "./config-target"
 import { TidyExplorerConfiguration, PocketConfiguration } from "./configuration-data-type"
-import {TIDY_EXPLORER_CONFIG_KEY} from "./id-keys"
+import { TIDY_EXPLORER_CONFIG_KEY } from "./id-keys"
 import { Selector } from "./selector";
 
 export const defaultExcludePocketName = "Default Excludes";
@@ -17,7 +18,22 @@ export class Pocket {
         forEachConfigurationTarget((target) => {
             Pocket.loadFromTarget(target);
         })
+        Selector.reload();
+    }
 
+    /**
+     * clear "default hidden" pockets and the selectors
+     */
+    public static clearDefaultHidden() {
+        Pocket.registry.forEach((subRegistry, targetKey)=>{
+            subRegistry.delete(defaultExcludePocketName);
+        });
+        Pocket.registry.forEach((subRegistry, targetKey)=>{
+            if (subRegistry.size === 0) {
+                Pocket.registry.delete(targetKey);
+            }
+        });
+        Selector.clearDefaultHiddenSelectors();        
     }
     /**
      * {
@@ -36,14 +52,14 @@ export class Pocket {
      */
     public static addDefaultExcludePocket(target: ConfigurationTarget, globs: string[]) {
         const targetPocketRegistry = Pocket.getPocketRegistry(target);
-        targetPocketRegistry.set(defaultExcludePocketName,
-            new Pocket(target, {
-                name: defaultExcludePocketName,
-                selectors: globs
-            })
-        )
+        const defaultExcludePocket = new Pocket(target, {
+            name: defaultExcludePocketName,
+            selectors: globs
+        });
+        defaultExcludePocket.selectors.forEach((selector)=>{selector.setDefaultHidden()});
+        targetPocketRegistry.set(defaultExcludePocketName, defaultExcludePocket);
     }
-    
+
     private static getPocketRegistry(target: ConfigurationTarget) {
         // obtain registry instance
         const targetKey = getTargetKey(target);
