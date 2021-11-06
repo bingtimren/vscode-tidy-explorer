@@ -113,12 +113,12 @@ export class UriNode {
     
     public delChildrenFromGlob(globIdStr: string) : UriNode | undefined  {
         let nodeAffected : UriNode | undefined = undefined;
-        for (const [childKey, childNode] of Object.entries(this.children || [])) {
+        for (const [childKey, childNode] of (this.children?this.children.entries():([] as [string,UriNode][]))) {
             if (childNode.fromGlobs.delete(globIdStr)) { // so childNode was at least partially from selector
                 // if childNode not only from this but also other selector, go down the path and find the affected node (where deletion occurs)
                 // otherwise undefined
-                const childNodeAffected = (childNode.fromSelectors.size>0? childNode.delChildrenFromGlob(globIdStr):undefined);
-                if (childNode.fromSelectors.size===0 || (childNode.children && (Object.keys(childNode.children).length === 0))) {
+                const childNodeAffected = (childNode.fromGlobs.size>0? childNode.delChildrenFromGlob(globIdStr):undefined);
+                if (childNode.fromGlobs.size===0 || (childNode.children && (Object.keys(childNode.children).length === 0))) {
                     // for whatever reason the childNode now has no selector source, or is a non-leaf none-children node
                     this.children!.delete(childKey);
                     nodeAffected = this; // "this" is where deletion occurs
