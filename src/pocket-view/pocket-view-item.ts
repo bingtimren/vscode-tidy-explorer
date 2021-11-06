@@ -56,6 +56,10 @@ export class PocketViewItem extends vscode.TreeItem {
     }
 
     private getContextValue(): string {
-        return "";
+        if ((this.item instanceof Pocket && this.item.isDefaultExclude())  || (this.item instanceof Selector && this.item.getSetting() === "hidden-by-default")) {
+            return ""; // nothing can be done
+        }
+        // S-can show     H-can hide    N-can set inactive
+        return  "SHN";
     }
 }

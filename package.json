@@ -72,17 +72,17 @@
 				{
 					"command": "tidyExplorer.setHidden",
 					"group": "inline",
-					"when": "view == tidyExplorerPockets"
+					"when": "view == tidyExplorerPockets && viewItem =~ /H/"
 				},
 				{
 					"command": "tidyExplorer.setInactive",
 					"group": "inline",
-					"when": "view == tidyExplorerPockets"
+					"when": "view == tidyExplorerPockets && viewItem =~ /N/"
 				},
 				{
 					"command": "tidyExplorer.setDisplay",
 					"group": "inline",
-					"when": "view == tidyExplorerPockets"
+					"when": "view == tidyExplorerPockets && viewItem =~ /S/"
 				}
 			]
 		}
