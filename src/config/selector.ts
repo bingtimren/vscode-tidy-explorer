@@ -176,9 +176,9 @@ export class Selector {
         await forEachConfigurationTarget(async (target) => {
             const filesExcludeSetting = getConfigurationFromTarget<Object & { [glob: string]: boolean }>(target, FILES_EXCLUDE_KEY);
             // get selectors which setting (not necessarily effective setting) is "hidden"
-            const hiddenSelectors = Array.from(Selector.getRegistryByTarget(target).values()).filter((selector) => {
-                selector.getSetting() === "hidden";
-            });
+            const hiddenSelectors = Array.from(Selector.getRegistryByTarget(target).values()).filter((selector) => 
+                (selector.getSetting() === "hidden" || selector.getSetting() === "hidden-by-default")
+            );
             if (!Selector.compareFilesExcludesWithSelectors(filesExcludeSetting, hiddenSelectors)) {
                 // convert array of hidden selectors into files.exclude setting value object
                 const targetFilesExcludeSetting = hiddenSelectors.reduce(
