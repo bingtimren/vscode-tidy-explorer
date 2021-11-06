@@ -63,4 +63,5 @@ export async function setSelectorState(setting: SelectorSetting, item: Pocket|Se
     // no actual files.exclude change, reload "display" states and reload tidyView
     await Selector.loadStateDisplayFromStorage();
     await tidyViewReload();
+    pocketViewChangeEmitter.fire();
 }
