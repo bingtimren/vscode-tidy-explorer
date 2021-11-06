@@ -7,6 +7,9 @@ import { Selector } from "./selector";
 export const defaultExcludePocketName = "Default Excludes";
 
 export class Pocket {
+    isDefaultExclude() {
+        return this.config.name === defaultExcludePocketName;
+    }
 
     // Static, loading
     /**

@@ -17,7 +17,7 @@ export class PocketViewItem extends vscode.TreeItem {
 
 
     private static getItemLabelAndCollapsibleState(item: PocketViewNodeType): [string, vscode.TreeItemCollapsibleState] {
-        if (typeof(item)==="string") {
+        if (typeof (item) === "string") {
             // target key
             const target = getTargetFromKey(item);
             return [(typeof target === "string" ? `[${target}]` : target.name), vscode.TreeItemCollapsibleState.Collapsed];
@@ -29,15 +29,15 @@ export class PocketViewItem extends vscode.TreeItem {
     }
 
     private decorateItem() {
-        if (isConfigurationTarget(this.item)) {
-            // configuration target
+        if (this.item instanceof Pocket) {
+            this.iconPath = new vscode.ThemeIcon(this.item.isDefaultExclude()?"eye-closed":"list-selection", new vscode.ThemeColor("foreground"));
         }
         else if (this.item instanceof Selector) {
             // selector
             this.tooltip = "a glob pattern";
-            switch(this.item.getEffectiveSetting()) {
+            switch (this.item.getEffectiveSetting()) {
                 case "display-by-inheritance": this.tooltip = "Overridden"
-                case "display": 
+                case "display":
                     this.iconPath = new vscode.ThemeIcon("eye", new vscode.ThemeColor("foreground"));
                     break;
                 case "hidden":
@@ -45,14 +45,13 @@ export class PocketViewItem extends vscode.TreeItem {
                     this.iconPath = new vscode.ThemeIcon("error", new vscode.ThemeColor("foreground"));
                     break;
                 case "inactive":
-                    
-                
+
+
             }
-           
+
         } else {
-            // pocket
-            this.iconPath = new vscode.ThemeIcon("folder");
-            
+            // configuration target
+            this.iconPath = new vscode.ThemeIcon("gear", new vscode.ThemeColor("foreground"));
         }
     }
 
