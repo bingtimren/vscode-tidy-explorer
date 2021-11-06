@@ -116,6 +116,7 @@ async function addSelector(selector: Selector) {
 };
 function removeSelector(globIdStr: string) {
     const disposables = subscriptions.get(globIdStr);
+    subscriptions.delete(globIdStr);
     if (disposables) {
         // stop listening, yet keep the cache
         disposables.forEach((d)=>{d.dispose();});
