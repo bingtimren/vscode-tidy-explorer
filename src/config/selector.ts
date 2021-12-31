@@ -16,9 +16,7 @@ import { Pocket } from "./pocket";
  * "display-by-inheritance" - display because of inheritance
  */
 
-export type SelectorSetting = "hidden" | "inactive" | "display" | "hidden-by-default";
-
-export type SelectorEffectiveSetting = SelectorSetting | "display-by-inheritance" | "hidden-by-inheritance";
+export type SelectorSetting = "hidden" | "inactive" | "display";
 
 export class Selector {
     /**
@@ -34,7 +32,7 @@ export class Selector {
     static clearDefaultHiddenSelectors() {
         Selector.registry.forEach((subRegistry, targetKey)=>{
             subRegistry.forEach((selector, key)=>{
-                if (selector.getSetting() === "hidden-by-default") {
+                if (selector.getSetting() === "hidden" && selector.isDefaultHidden) {
                     subRegistry.delete(key);
                 }
             });
@@ -183,7 +181,7 @@ export class Selector {
             const filesExcludeSetting = getConfigurationFromTarget<Object & { [glob: string]: boolean }>(target, FILES_EXCLUDE_KEY);
             // get selectors which setting (not necessarily effective setting) is "hidden"
             const hiddenSelectors = Array.from(Selector.getRegistryByTarget(target).values()).filter((selector) => 
-                (selector.getSetting() === "hidden" || selector.getSetting() === "hidden-by-default")
+                (selector.getSetting() === "hidden")
             );
             if (!Selector.compareFilesExcludesWithSelectors(filesExcludeSetting, hiddenSelectors)) {
                 // convert array of hidden selectors into files.exclude setting value object
@@ -244,10 +242,13 @@ export class Selector {
      */
     readonly idString: string;
     private setting: SelectorSetting;
+    private _defaultHidden: boolean;
+    public get isDefaultHidden() {return this._defaultHidden};
 
     private constructor(readonly target: ConfigurationTarget, readonly globPattern: SelectorConfiguration) {
         this.idString = Selector.getIdString(target, globPattern);
         this.setting = "inactive"; // default setting
+        this._defaultHidden = false;
     };
 
     // Instance Setting
@@ -268,9 +269,10 @@ export class Selector {
         if (this.setting !== "inactive") {
             throw new Error("Hidden-by-default should transit from 'inactive' only");
         }
-        this.setting = "hidden-by-default";
+        this.setting = "hidden";
+        this._defaultHidden = true;
     }
-    public getEffectiveSetting() : SelectorEffectiveSetting {
+    public getEffectiveSetting() : SelectorSetting {
         if (this.target === "Global") {
             return this.getSetting(); // no overriding issue
         }
@@ -280,9 +282,9 @@ export class Selector {
             if (globalParentSetting==="hidden" || this.getSetting() === "hidden") {
                 return "hidden";
             };
-            // otherwise either one "display" then "display"
+            // otherwise "display" overrides potential "inactive"
             if (globalParentSetting==="display") {
-                return "display-by-inheritance";
+                return "display";
             }; // no need for workspace-level "display" - the same
             // global undefined or inactive
             return this.getSetting();
@@ -290,10 +292,10 @@ export class Selector {
         // this.target is workspace folder
         const workspaceLevelEffectiveSetting = (Selector.getSelector("WorkSpace", this.globPattern, false)?.getEffectiveSetting()) || globalParentSetting;
         // rule 1: if workspace-level hidden - hidden
-        if (workspaceLevelEffectiveSetting === "hidden" || workspaceLevelEffectiveSetting === "hidden-by-default") {return "hidden-by-inheritance";} // hidden setting overrides 
+        if (workspaceLevelEffectiveSetting === "hidden") {return "hidden";} // hidden setting overrides 
         // rule 2: if workspace-level display, depends on self (more specific)
-        if ((workspaceLevelEffectiveSetting === "display" || workspaceLevelEffectiveSetting === "display-by-inheritance") && this.getSetting()==="inactive") {
-            return "display-by-inheritance"; // self "inactive" effectively "display"
+        if (workspaceLevelEffectiveSetting === "display" && this.getSetting()==="inactive") {
+            return "display"; // self "inactive" effectively "display"
         };
         // rule 3: if workspace-level inactive or no selector, use self setting
         return this.getSetting();
