@@ -59,7 +59,7 @@
 			{
 				"command": "tidyExplorer.setInactive",
 				"title": "Un-use",
-				"icon": "$(ellipsis)"
+				"icon": "$(discard)"
 			},
 			{
 				"command": "tidyExplorer.setDisplay",

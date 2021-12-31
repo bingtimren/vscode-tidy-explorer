@@ -11,7 +11,7 @@ import { getWatcherGlob } from "./tidy-view";
  */
 export function getGlobIdString(selector:Selector): string {
     const base = selector.getWorkspaceFolder();
-    return `${base?base.uri.toString():'[G]'}...${selector.globPattern}`
+    return `${base?base.uri.toString():'[G]'}...${selector.globPattern}`;
 }
 
 
@@ -36,9 +36,9 @@ export class SelectorFileCache {
             const newInstance = new SelectorFileCache(getWatcherGlob(selector));
             await newInstance.init();
             SelectorFileCache.registry.set(globIdString, newInstance);
-            return newInstance
+            return newInstance;
         } else {
-            return existing
+            return existing;
         }
     };
     public static async getInstanceByGlobIdStr(globIdStr : string) {

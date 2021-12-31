@@ -20,12 +20,12 @@ export class UriNode {
     public static createRoot() : UriNode {
         return new UriNode(null,null,"ROOT",false);
     }
-    get isRoot():boolean {return this.uri === null};
+    get isRoot():boolean {return this.uri === null;};
     private constructor(readonly uri: Uri | null, fromGlob: string|null, readonly name: string, isLeaf: boolean) {
         if (!isLeaf) {
             this.children = new Map();
         };
-        if (fromGlob != null) {
+        if (fromGlob !== null) {
             this.fromGlobs.add(fromGlob);
         } // otherwise if fromGlob is null, meaning is the root
     }
@@ -100,7 +100,7 @@ export class UriNode {
             return this; // and this node is where deletion starts
         } else { // ask the child to delete 
             const affectedChild = downPathChild.delFile(relativePath, nextSeparator + 1);
-            if (Object.keys(downPathChild.children!).length == 0) {
+            if (Object.keys(downPathChild.children!).length === 0) {
                 // left an empty down-path child, delete as well
                 this.children!.delete(name);
                 return this;

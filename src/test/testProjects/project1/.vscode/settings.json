@@ -6,10 +6,16 @@
                 "**/*.js",
                 "project1-settings"
             ]
+        },
+        {
+            "name": "Project 1 Overriden",
+            "selectors": [
+                "existing",
+                "workspace-existing"
+            ]
         }
     ],
     "files.exclude": {
-        "node_modules": true,
         "existing": true
     },
 }

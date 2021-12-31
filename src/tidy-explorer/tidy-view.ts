@@ -22,7 +22,7 @@ export const tidyExplorerDataProvider: TreeDataProvider<UriNode> = {
             (element.children ? Array.from(element.children.values()) : [])
             : Array.from(root.children!.values()));
     }
-}
+};
 
 
 
@@ -31,7 +31,7 @@ export const tidyExplorerDataProvider: TreeDataProvider<UriNode> = {
  */
 export function clear() {
     for (const disposables of subscriptions.values()) {
-        disposables.forEach((d)=>{d.dispose()});
+        disposables.forEach((d)=>{d.dispose();});
     }
     SelectorFileCache.resetAndDisposeAll();
     root.clear();

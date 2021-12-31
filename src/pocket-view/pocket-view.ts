@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { ConfigurationTarget, getTargetFromKey, getTargetKey, isConfigurationTarget } from "../config/config-target";
-import { Pocket } from "../config/pocket"
+import { getTargetKey } from "../config/config-target";
+import { Pocket } from "../config/pocket";
 import { Selector } from "../config/selector";
 import { PocketViewItem } from "./pocket-view-item";
 
@@ -17,17 +17,26 @@ export const pocketViewDataProvider : vscode.TreeDataProvider<PocketViewNodeType
     getChildren(element?: PocketViewNodeType): vscode.ProviderResult<PocketViewNodeType[]> {
         if (!element) { // root, return configuration target array
             return Array.from(Pocket.registry.keys());
-        } else if (typeof(element)==="string") {
+        } else if (typeof(element)==="string") { // configuration target keys
             const targetPocketRegistry = Pocket.registry.get(element);
             return Array.from(targetPocketRegistry?.values() || []);
         } else if (element instanceof Pocket) {
-            return element.selectors as Selector[]
+            return element.selectors as Selector[];
         } else {
-            return null
+            return null;
+        }
+    },
+    getParent(element: PocketViewNodeType): vscode.ProviderResult<PocketViewNodeType>{
+        if (typeof(element)==="string") { // configuration target keys
+            return null;
+        } else if (element instanceof Pocket) {
+            return getTargetKey( element.target);
+        } else {
+            return null;
         }
     }
 
-}
+};
 
 
 

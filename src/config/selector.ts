@@ -1,18 +1,24 @@
 import { ConfigurationTarget, forEachConfigurationTarget, getConfigurationFromTarget, getTargetKey } from "./config-target";
-import { SelectorConfiguration } from "./configuration-data-type"
+import { SelectorConfiguration } from "./configuration-data-type";
 import * as vscode from "vscode";
-import { globalState, workspaceState } from "../extension"
+import { globalState, workspaceState } from "../extension";
 import { FILES_EXCLUDE_KEY } from "./id-keys";
 import { Pocket } from "./pocket";
 
 /**
  * A Selector for calling vscode.workspace.findFiles or, if only includePattern is provided,
  * for added into "files.exclude" settings
+ * 
+ * "hidden" - added into 'files.exclude'
+ * "inactive" - no action
+ * "display" - added into "tidy explorer"
+ * "hidden-by-default" - hidden by "default excludes"
+ * "display-by-inheritance" - display because of inheritance
  */
 
 export type SelectorSetting = "hidden" | "inactive" | "display" | "hidden-by-default";
 
-export type SelectorEffectiveSetting = SelectorSetting | "display-by-inheritance";
+export type SelectorEffectiveSetting = SelectorSetting | "display-by-inheritance" | "hidden-by-inheritance";
 
 export class Selector {
     /**
@@ -31,8 +37,8 @@ export class Selector {
                 if (selector.getSetting() === "hidden-by-default") {
                     subRegistry.delete(key);
                 }
-            })
-        })
+            });
+        });
     }
 
     // Static
@@ -70,7 +76,7 @@ export class Selector {
         const targetKey = getTargetKey(target);
         const existingTargetRegistry = Selector.registry.get(targetKey);
         if (existingTargetRegistry) {
-            return existingTargetRegistry
+            return existingTargetRegistry;
         } else {
             const newMap = new Map<string, Selector>();
             Selector.registry.set(targetKey, newMap);
@@ -107,7 +113,7 @@ export class Selector {
             for (const [glob, selector] of Selector.getRegistryByTarget(target)){
                 const excluded = filesExclude.delete(glob);
                 if (excluded) {
-                    if (selector.getSetting() != "hidden") {
+                    if (selector.getSetting() !== "hidden") {
                         await selector.setSetting("hidden");
                     }
                 } else {
@@ -119,7 +125,7 @@ export class Selector {
             if (filesExclude.size > 0) {
                 Pocket.addDefaultExcludePocket(target, Array.from(filesExclude));
             }
-        })
+        });
     }
 
     /**
@@ -150,7 +156,7 @@ export class Selector {
                 if (existInStorage) {
                     if (selector.getSetting() !== 'hidden') {
                         // set without triggering persistence
-                        selector.setting = "display"
+                        selector.setting = "display";
                     } else {
                         await storage.update(selector.idString, undefined);
                     }
@@ -186,7 +192,7 @@ export class Selector {
                         preValue[selector.globPattern] = true;
                         return preValue;
                     }, {} as { [glob: string]: boolean }
-                )
+                );
                 // do setting
                 const scopedConfig = vscode.workspace.getConfiguration(
                     undefined, typeof target === "string" ? undefined : target);
@@ -214,12 +220,12 @@ export class Selector {
             // if both has same size, further examine if all selectors' globs are present 
             for (const selector of hiddenSelectors) {
                 if (!(filesExcludeSetting!.hasOwnProperty(selector.globPattern))) {
-                    return false
+                    return false;
                 }
             };
             return true;
         } else {
-            return false
+            return false;
         }
     }
 
@@ -228,7 +234,7 @@ export class Selector {
         return typeof (target) === "string" ? `[${target}]...${glob}` : `[${target.uri.toString()}]...${glob}`;
     }
     private static getStorageFromTarget(target: ConfigurationTarget): vscode.Memento {
-        return target === "Global" ? globalState! : workspaceState!
+        return target === "Global" ? globalState! : workspaceState!;
     }
     // Instance Construction
 
@@ -245,7 +251,7 @@ export class Selector {
     };
 
     // Instance Setting
-    public getSetting(): SelectorSetting { return this.setting };
+    public getSetting(): SelectorSetting { return this.setting; };
     /**
      * set setting, however only persist "display" setting
      * @param setting 
@@ -272,7 +278,7 @@ export class Selector {
         if (this.target === "WorkSpace") {
             // rule 1: "hidden" overrides
             if (globalParentSetting==="hidden" || this.getSetting() === "hidden") {
-                return "hidden"
+                return "hidden";
             };
             // otherwise either one "display" then "display"
             if (globalParentSetting==="display") {
@@ -284,10 +290,10 @@ export class Selector {
         // this.target is workspace folder
         const workspaceLevelEffectiveSetting = (Selector.getSelector("WorkSpace", this.globPattern, false)?.getEffectiveSetting()) || globalParentSetting;
         // rule 1: if workspace-level hidden - hidden
-        if (workspaceLevelEffectiveSetting === "hidden") return "hidden"; // hidden setting overrides 
+        if (workspaceLevelEffectiveSetting === "hidden" || workspaceLevelEffectiveSetting === "hidden-by-default") {return "hidden-by-inheritance";} // hidden setting overrides 
         // rule 2: if workspace-level display, depends on self (more specific)
-        if (workspaceLevelEffectiveSetting === "display" || workspaceLevelEffectiveSetting === "display-by-inheritance") {
-            return (this.getSetting()==="hidden"? "hidden" : "display-by-inheritance"); // self "inactive" effectively "display"
+        if ((workspaceLevelEffectiveSetting === "display" || workspaceLevelEffectiveSetting === "display-by-inheritance") && this.getSetting()==="inactive") {
+            return "display-by-inheritance"; // self "inactive" effectively "display"
         };
         // rule 3: if workspace-level inactive or no selector, use self setting
         return this.getSetting();

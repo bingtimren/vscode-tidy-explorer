@@ -5,8 +5,8 @@
 
 import { Selector, SelectorSetting } from "../config/selector";
 import { Pocket } from "../config/pocket";
-import {reload as tidyViewReload, clear as tidyViewClear} from "../tidy-explorer/tidy-view"
-import {onDidChangeEmitter as pocketViewChangeEmitter} from "../pocket-view/pocket-view"
+import {reload as tidyViewReload, clear as tidyViewClear} from "../tidy-explorer/tidy-view";
+import {onDidChangeEmitter as pocketViewChangeEmitter} from "../pocket-view/pocket-view";
 import { ConfigurationChangeEvent } from "vscode";
 import { TIDY_EXPLORER_CONFIG_KEY, FILES_EXCLUDE_KEY } from "../config/id-keys";
 import { SelectorFileCache } from "../tidy-explorer/selector-file-cache";

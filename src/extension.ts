@@ -2,13 +2,15 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import * as key from './config/id-keys';
-import * as controller from "./control/controller"
-import {pocketViewDataProvider} from "./pocket-view/pocket-view"
-import {tidyExplorerDataProvider} from "./tidy-explorer/tidy-view"
+import { Pocket } from './config/pocket';
+import { Selector } from './config/selector';
+import * as controller from "./control/controller";
+import { pocketViewDataProvider } from "./pocket-view/pocket-view";
+import { tidyExplorerDataProvider } from "./tidy-explorer/tidy-view";
 
 
-export let globalState : vscode.Memento | undefined = undefined;
-export let workspaceState : vscode.Memento | undefined = undefined;
+export let globalState: vscode.Memento | undefined = undefined;
+export let workspaceState: vscode.Memento | undefined = undefined;
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -16,15 +18,15 @@ export function activate(context: vscode.ExtensionContext) {
 	// set the exported states
 	globalState = context.globalState;
 	workspaceState = context.workspaceState;
-		
+
 	// register views
 	const pocketView = vscode.window.createTreeView(key.POCKET_VIEW_ID, {
 		treeDataProvider: pocketViewDataProvider
 	});
 	context.subscriptions.push(pocketView);
 
-	const tidyExplorer = vscode.window.createTreeView(key.FILE_VIEW_ID, { 
-		treeDataProvider: tidyExplorerDataProvider 
+	const tidyExplorer = vscode.window.createTreeView(key.FILE_VIEW_ID, {
+		treeDataProvider: tidyExplorerDataProvider
 	});
 	context.subscriptions.push(tidyExplorer);
 
@@ -35,15 +37,15 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// register commands
 	vscode.commands.registerCommand(
-		key.CMD_SET_DISPLAY, controller.setSelectorState.bind(undefined, "display")
+		key.CMD_SET_DISPLAY, (item: Pocket | Selector) => { pocketView.reveal(item, {select:true, focus:true}); controller.setSelectorState("display", item); }
 	);
 	vscode.commands.registerCommand(
-		key.CMD_SET_HIDDEN, controller.setSelectorState.bind(undefined, "hidden")
+		key.CMD_SET_HIDDEN, (item: Pocket | Selector) => { pocketView.reveal(item, {select:true, focus:true}); controller.setSelectorState("hidden", item); }
 	);
 	vscode.commands.registerCommand(
-		key.CMD_SET_INACTIVE, controller.setSelectorState.bind(undefined, "inactive")
+		key.CMD_SET_INACTIVE, (item: Pocket | Selector) => { pocketView.reveal(item, {select:true, focus: true}); controller.setSelectorState("inactive", item); }
 	);
-	
+
 	// load and start-up
 	controller.startUp();
 }

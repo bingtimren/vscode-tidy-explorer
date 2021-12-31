@@ -12,6 +12,7 @@
 			{
 				"name": "Workspace Settings",
 				"selectors": [
+					"**/*.js",
 					"src/**/*.js",
 					"src/**/*.map",
 					"workspace-settings"
@@ -19,10 +20,8 @@
 			}
 		],
 		"files.exclude": {
-			"src/**/*.js":true,
 			"existing": true,
-			"workspace-existing": true,
-
+			"workspace-existing": true
 		},
 	}
 }

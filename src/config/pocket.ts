@@ -1,7 +1,7 @@
 import { SelectorFileCache } from "../tidy-explorer/selector-file-cache";
-import { ConfigurationTarget, getConfigurationFromTarget, getTargetKey, forEachConfigurationTarget } from "./config-target"
-import { TidyExplorerConfiguration, PocketConfiguration } from "./configuration-data-type"
-import { TIDY_EXPLORER_CONFIG_KEY } from "./id-keys"
+import { ConfigurationTarget, getConfigurationFromTarget, getTargetKey, forEachConfigurationTarget } from "./config-target";
+import { TidyExplorerConfiguration, PocketConfiguration } from "./configuration-data-type";
+import { TIDY_EXPLORER_CONFIG_KEY } from "./id-keys";
 import { Selector } from "./selector";
 
 export const defaultExcludePocketName = "Default Excludes";
@@ -21,7 +21,7 @@ export class Pocket {
         // load pockets from each target
         forEachConfigurationTarget((target) => {
             Pocket.loadFromTarget(target);
-        })
+        });
 
     }
 
@@ -60,7 +60,7 @@ export class Pocket {
             name: defaultExcludePocketName,
             selectors: globs
         });
-        defaultExcludePocket.selectors.forEach((selector)=>{selector.setDefaultHidden()});
+        defaultExcludePocket.selectors.forEach((selector)=>{selector.setDefaultHidden();});
         targetPocketRegistry.set(defaultExcludePocketName, defaultExcludePocket);
     }
 
@@ -85,7 +85,7 @@ export class Pocket {
 
     // Instance Construction
     private constructor(readonly target: ConfigurationTarget, readonly config: PocketConfiguration) {
-        this.selectors = config.selectors.map((selectorConfig) => Selector.getSelector(target, selectorConfig, true)!)
+        this.selectors = config.selectors.map((selectorConfig) => Selector.getSelector(target, selectorConfig, true)!);
     }
 
     // Instance Properties

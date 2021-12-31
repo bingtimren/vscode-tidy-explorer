@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { getTargetFromKey, isConfigurationTarget } from "../config/config-target";
+import { getTargetFromKey } from "../config/config-target";
 import { Pocket } from "../config/pocket";
 import { Selector } from "../config/selector";
 import { PocketViewNodeType } from "./pocket-view";
@@ -34,18 +34,30 @@ export class PocketViewItem extends vscode.TreeItem {
         }
         else if (this.item instanceof Selector) {
             // selector
-            this.tooltip = "a glob pattern";
             switch (this.item.getEffectiveSetting()) {
-                case "display-by-inheritance": this.tooltip = "Overridden"
+                case "display-by-inheritance": 
+                    this.tooltip = "Showing in Tidy Explorer because of a parent (workspace or global) setting";
+                    this.iconPath = new vscode.ThemeIcon("eye", new vscode.ThemeColor("list.highlightForeground"));
+                    break;
                 case "display":
-                    this.iconPath = new vscode.ThemeIcon("eye", new vscode.ThemeColor("foreground"));
+                    this.tooltip = "Showing in Tidy Explorer";
+                    this.iconPath = new vscode.ThemeIcon("eye", new vscode.ThemeColor("list.highlightForeground"));
                     break;
                 case "hidden":
+                    this.tooltip = "Added into 'files.exclude' setting, hidden in file explorer";
+                    this.iconPath = new vscode.ThemeIcon("error", new vscode.ThemeColor("list.warningForeground"));
+                    break;
+                case "hidden-by-inheritance":
+                    this.tooltip = "Added into a parent's (workspace or global) 'files.exclude' setting, hidden in file explorer";
+                    this.iconPath = new vscode.ThemeIcon("error", new vscode.ThemeColor("list.warningForeground"));
+                    break;
                 case "hidden-by-default":
-                    this.iconPath = new vscode.ThemeIcon("error", new vscode.ThemeColor("foreground"));
+                    this.tooltip = "In default 'files.exclude' setting, hidden in file explorer";
+                    this.iconPath = new vscode.ThemeIcon("error", new vscode.ThemeColor("list.warningForeground"));
                     break;
                 case "inactive":
-                    this.iconPath = new vscode.ThemeIcon("ellipsis", new vscode.ThemeColor("foreground"));
+                    this.tooltip = "Not using this pattern, no effect";
+                    this.iconPath = new vscode.ThemeIcon("debug-stackframe-dot", new vscode.ThemeColor("foreground"));
                     break;
 
             }
@@ -57,7 +69,7 @@ export class PocketViewItem extends vscode.TreeItem {
     }
 
     private getContextValue(): string {
-        if ((this.item instanceof Pocket && this.item.isDefaultExclude())  || (this.item instanceof Selector && this.item.getSetting() === "hidden-by-default")) {
+        if ((typeof(this.item)==="string") || (this.item instanceof Pocket && this.item.isDefaultExclude())  || (this.item instanceof Selector && this.item.getSetting() === "hidden-by-default")) {
             return ""; // nothing can be done
         }
         // S-can show     H-can hide    N-can set inactive
