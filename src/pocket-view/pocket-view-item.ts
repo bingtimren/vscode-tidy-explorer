@@ -45,7 +45,7 @@ export class PocketViewItem extends vscode.TreeItem {
                     this.iconPath = new vscode.ThemeIcon("error", new vscode.ThemeColor("list.warningForeground"));
                     break;
                 case "inactive":
-                    this.tooltip = "Not in use.";
+                    tooltip = "Not in use.";
                     this.iconPath = new vscode.ThemeIcon("debug-stackframe-dot", new vscode.ThemeColor("foreground"));
                     break;
             }
