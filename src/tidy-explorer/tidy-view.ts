@@ -33,6 +33,7 @@ export function clear() {
     for (const disposables of subscriptions.values()) {
         disposables.forEach((d)=>{d.dispose();});
     }
+    subscriptions.clear();
     SelectorFileCache.resetAndDisposeAll();
     root.clear();
 }
@@ -60,7 +61,7 @@ export async function reload() {
         for (const selector of targetSelectorRegistry.values()) {
             const selectorGlobIdStr = getGlobIdString(selector);
             const isSubscribed = existingGlobIds.delete(selectorGlobIdStr);
-            if (selector.getEffectiveSetting() === "display") { // if being "display-by-inheritance" no action is needed
+            if (selector.getSetting() === "display") { 
                 if (!isSubscribed) {
                     addSelector(selector);
                 } // else nothing to do

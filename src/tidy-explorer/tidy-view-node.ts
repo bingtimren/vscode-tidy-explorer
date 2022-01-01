@@ -100,7 +100,7 @@ export class UriNode {
             return this; // and this node is where deletion starts
         } else { // ask the child to delete 
             const affectedChild = downPathChild.delFile(relativePath, nextSeparator + 1);
-            if (Object.keys(downPathChild.children!).length === 0) {
+            if ( downPathChild.children!.size===0) {
                 // left an empty down-path child, delete as well
                 this.children!.delete(name);
                 return this;
@@ -118,7 +118,7 @@ export class UriNode {
                 // if childNode not only from this but also other selector, go down the path and find the affected node (where deletion occurs)
                 // otherwise undefined
                 const childNodeAffected = (childNode.fromGlobs.size>0? childNode.delChildrenFromGlob(globIdStr):undefined);
-                if (childNode.fromGlobs.size===0 || (childNode.children && (Object.keys(childNode.children).length === 0))) {
+                if (childNode.fromGlobs.size===0 || (childNode.children && (  childNode.children.size === 0))) {
                     // for whatever reason the childNode now has no selector source, or is a non-leaf none-children node
                     this.children!.delete(childKey);
                     nodeAffected = this; // "this" is where deletion occurs
