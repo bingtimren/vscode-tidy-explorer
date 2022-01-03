@@ -1,9 +1,11 @@
 {
 	"name": "tidy-explorer",
-	"displayName": "tidy-explorer",
+	"displayName": "Tidy Explorer",
 	"description": "VSCode plugin for tidying up the file explorer",
-	"version": "1.0.0",
+	"icon": "images/tidy-explorer.png",
+	"version": "1.0.1",
 	"publisher": "bingtimren",
+	"keywords": ["explorer", "file", "exclude", "hide", "pin", "focus", "organize", "glob", "pattern", "search"],
 	"engines": {
 		"vscode": "^1.60.0"
 	},
@@ -14,6 +16,16 @@
 		"onStartupFinished"
 	],
 	"main": "./out/extension.js",
+	"funding": "https://www.buymeacoffee.com/bingtimren",
+	"license": "MIT",
+	"author": {
+		"name": "Bing Ren",
+		"url": "https://github.com/bingtimren"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/bingtimren/vscode-tidy-explorer"
+	},
 	"contributes": {
 		"configuration": {
 			"title": "Tidy Explorer",
