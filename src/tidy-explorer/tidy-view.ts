@@ -43,6 +43,7 @@ export function clear() {
     subscriptions.clear();
     SelectorFileCache.resetAndDisposeAll();
     root.clear();
+    onDidChangeTreeDataEmitter.fire(undefined);
 }
 
 /**

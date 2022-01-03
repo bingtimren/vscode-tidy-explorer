@@ -35,7 +35,6 @@ export async function startUp(event?: ConfigurationChangeEvent) {
     // if files.exclude changes, reset tidy view and the file caches
     if (event && event.affectsConfiguration(FILES_EXCLUDE_KEY)) {
         tidyViewClear();
-        SelectorFileCache.resetAndDisposeAll();
     };
     // partially or fully reload pocket
     if (event === undefined || event && event.affectsConfiguration(TIDY_EXPLORER_CONFIG_KEY)) {
