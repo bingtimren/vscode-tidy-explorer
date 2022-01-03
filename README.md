@@ -9,6 +9,13 @@ This extension allows you to configure glob patterns and group related glob patt
 
 When you have a complex project with a large number of files and folders, this extension help you reduce the distractions from uninterested files (e.g. auto-generated) and focus on the files you are working on.
 
+## Support
+
+If you like this extension, please consider buying me a coffee :)
+
+https://www.buymeacoffee.com/bingtimren
+
+
 ## Define Pockets
 
 To get started, first configure Pockets:
