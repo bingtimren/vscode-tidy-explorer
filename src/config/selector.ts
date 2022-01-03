@@ -142,15 +142,18 @@ export class Selector {
      */
     public static async loadStateDisplayFromStorage() {
         await forEachConfigurationTarget(async (target) => {
+            const targetKeyPrefix = this.getTargetSelectorKeyPrefix(target);
             const storage = Selector.getStorageFromTarget(target);
             const registry = Selector.getRegistryByTarget(target);
-            const storageKeys = new Set<string>();
-            for (const key in storage.keys) {
-                storageKeys.add(key);
+            const storedDisplayKeys = new Set<string>();
+            for (const key of storage.keys()) {
+                if (key.startsWith(targetKeyPrefix)) {
+                    storedDisplayKeys.add(key);
+                }
             }
             // check all registry entries, deletes key from storage keys, and set 'display' state
             for (const [glob, selector] of registry.entries()) {
-                const existInStorage = storageKeys.delete(selector.idString);
+                const existInStorage = storedDisplayKeys.delete(selector.idString);
                 if (existInStorage) {
                     if (selector.getSetting() !== 'hidden') {
                         // set without triggering persistence
@@ -161,7 +164,7 @@ export class Selector {
                 }
             }
             // remove remaining keys from storage
-            for (const key of storageKeys) {
+            for (const key of storedDisplayKeys) {
                 await storage.update(key, undefined);
             }
         });
@@ -227,9 +230,13 @@ export class Selector {
         }
     }
 
+    static getTargetSelectorKeyPrefix(target: ConfigurationTarget) : string {
+        return `[${getTargetKey(target)}]`;
+    }
 
     static getIdString(target: ConfigurationTarget, glob: string): string {
-        return typeof (target) === "string" ? `[${target}]...${glob}` : `[${target.uri.toString()}]...${glob}`;
+        return `${this.getTargetSelectorKeyPrefix(target)}...${glob}`;
+
     }
     private static getStorageFromTarget(target: ConfigurationTarget): vscode.Memento {
         return target === "Global" ? globalState! : workspaceState!;
