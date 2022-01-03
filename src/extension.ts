@@ -37,18 +37,18 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// register commands
 	vscode.commands.registerCommand(
-		key.CMD_SET_DISPLAY, (item: Pocket | Selector) => { pocketView.reveal(item, {select:true, focus:true}); controller.setSelectorState("display", item); }
+		key.CMD_SET_DISPLAY, async (item: Pocket | Selector) => { pocketView.reveal(item, {select:true, focus:true}); await controller.setSelectorState("display", item); }
 	);
 	vscode.commands.registerCommand(
-		key.CMD_SET_HIDDEN, (item: Pocket | Selector) => { pocketView.reveal(item, {select:true, focus:true}); controller.setSelectorState("hidden", item); }
+		key.CMD_SET_HIDDEN, async (item: Pocket | Selector) => { pocketView.reveal(item, {select:true, focus:true}); await controller.setSelectorState("hidden", item); }
 	);
 	vscode.commands.registerCommand(
-		key.CMD_SET_INACTIVE, (item: Pocket | Selector) => { pocketView.reveal(item, {select:true, focus: true}); controller.setSelectorState("inactive", item); }
+		key.CMD_SET_INACTIVE, async (item: Pocket | Selector) => { pocketView.reveal(item, {select:true, focus: true}); await controller.setSelectorState("inactive", item); }
 	);
 	vscode.commands.registerCommand(
-		key.CMD_TIDY_EXPLORER_REFRESH, ()=>{
+		key.CMD_TIDY_EXPLORER_REFRESH, async ()=>{
 			tidyViewClear();
-			tidyViewReload();			
+			await tidyViewReload();			
 		}
 	)
 
