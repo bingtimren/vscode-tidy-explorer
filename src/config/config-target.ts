@@ -10,8 +10,10 @@ export type ConfigurationTarget = "Global" | "WorkSpace" | vscode.WorkspaceFolde
 export async function forEachConfigurationTarget(action:(target:ConfigurationTarget)=>void){
     await action("Global");
     await action("WorkSpace");
-    for (const workspaceFolder of vscode.workspace.workspaceFolders || []) {
-        await action(workspaceFolder);
+    if (vscode.workspace.workspaceFile !== undefined){
+        for (const workspaceFolder of vscode.workspace.workspaceFolders || []) {
+            await action(workspaceFolder);
+        }
     }
 };
 
