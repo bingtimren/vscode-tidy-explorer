@@ -5,6 +5,7 @@
             "name": "Project 1 Settings",
             "selectors": [
                 "**/*.js",
+                "src/**/*.js",
                 "project1-settings"
             ]
         },
