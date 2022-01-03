@@ -20,7 +20,7 @@ export class PocketViewItem extends vscode.TreeItem {
         if (typeof (item) === "string") {
             // target key
             const target = getTargetFromKey(item);
-            return [(typeof target === "string" ? `[${target}]` : target.name), vscode.TreeItemCollapsibleState.Collapsed];
+            return [(typeof target === "string" ? (target==="Global"?"User":"Workspace") : target.name), vscode.TreeItemCollapsibleState.Collapsed];
         } else if (item instanceof Pocket) {
             return [item.config.name, vscode.TreeItemCollapsibleState.Collapsed];
         } else { // Selector
@@ -30,33 +30,37 @@ export class PocketViewItem extends vscode.TreeItem {
 
     private decorateItem() {
         if (this.item instanceof Pocket) {
-            this.iconPath = new vscode.ThemeIcon(this.item.isDefaultExclude()?"eye-closed":"list-selection", new vscode.ThemeColor("foreground"));
+            this.iconPath = new vscode.ThemeIcon(this.item.isDefaultExclude()?"eye-closed":"files", new vscode.ThemeColor("foreground"));
+            this.tooltip = "Pocket"
         }
         else if (this.item instanceof Selector) {
             let tooltip: string = "";
             // selector
             switch (this.item.getEffectiveSetting()) {
                 case "display":
-                    tooltip = "Showing in Tidy Explorer.";
-                    this.iconPath = new vscode.ThemeIcon("eye", new vscode.ThemeColor("list.highlightForeground"));
+                    tooltip = "Pinned";
+                    this.iconPath = new vscode.ThemeIcon("pinned", new vscode.ThemeColor("list.highlightForeground"));
                     break;
                 case "hidden":
-                    tooltip = "Hidden, pattern in 'files.exclude' setting.";
-                    this.iconPath = new vscode.ThemeIcon("error", new vscode.ThemeColor("list.warningForeground"));
+                    tooltip = "Hidden";
+                    this.iconPath = new vscode.ThemeIcon("eye-closed", new vscode.ThemeColor("list.warningForeground"));
                     break;
                 case "inactive":
-                    tooltip = "Not in use.";
+                    tooltip = "Not in use";
                     this.iconPath = new vscode.ThemeIcon("debug-stackframe-dot", new vscode.ThemeColor("foreground"));
                     break;
             }
             if (this.item.getSetting() !== this.item.getEffectiveSetting()) {
-                tooltip = tooltip + ` (setting '${this.item.getSetting()}' is overridden by a workspace or global setting)`;
+                tooltip = tooltip + ` (this setting is overridden by a Workspace or User scope setting)`;
             }
             this.tooltip = tooltip;
 
         } else {
             // configuration target
-            this.iconPath = new vscode.ThemeIcon("gear", new vscode.ThemeColor("foreground"));
+            this.iconPath = new vscode.ThemeIcon(
+                this.item === 'Global' ? "account" : (this.item === 'WorkSpace'? "gear" : "symbol-folder")
+                , new vscode.ThemeColor("foreground"));
+            this.tooltip = "Setting scope"
         }
     }
 

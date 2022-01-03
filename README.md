@@ -1,70 +1,73 @@
-# tidy-explorer README
+# Tidy Explorer
 
-This is the README for your extension "tidy-explorer". After writing up a brief description, we recommend including the following sections.
+Tidy up your file explorer, hide or pin files and folders with just one click.
 
-## Features
+This extension allows you to configure glob patterns and group related glob patterns into "Pockets". Then you can toggle the files that match an individual pattern or all patterns in a Pocket to:
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- hide the files in the file Explorer (one-click adding into the "files.exclude" setting)
+- pin the files in the "Tidy Explorer"
 
-For example if there is an image subfolder under your extension project workspace:
+When you have a complex project with a large number of files and folders, this extension help you reduce the distractions from uninterested files (e.g. auto-generated) and focus on the files you are working on.
 
-\!\[feature X\]\(images/feature-x.png\)
+## Define Pockets
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+To get started, first configure Pockets:
 
-## Requirements
+1. Open settings by following menu command **"File->Preference->Settings"**, or from the Command Palette (Ctrl+Shift+P) with **"Preferences: Open Settings"**
+2. Find "Tidy Explorer" settings by inputting "Tidy Explorer" in "Search settings", or under "Extensions".
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+    ![settings](images/settings.png)
+3. Select a scope to define the Pockets. You can define Pockets in the User scope, Workspace scope, or a workspace folder. Then click "Edit in settings.json".
+4.  Define Pockets, each Pocket has a name and a group of selectors (glob patterns)
 
-## Extension Settings
+    ![pockets](images/pockets.png)
+5. Save the settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+## Use the Switch Board
 
-For example:
+After the Pockets and the glob patterns are defined, you can toggle them in the Switch Board. 
 
-This extension contributes the following settings:
+![switch board](images/switchboard.png)
 
-* `myExtension.enable`: enable/disable this extension
-* `myExtension.thing`: set to `blah` to do something
+The Switch Board organizes Pockets and glob patterns in a tree, under the setting scopes (User settings, Workspace settings, or a workspace folder) in which they are defined.
+
+You can toggle the Pockets and glob patterns by clicking one of the 3 action icons for the Pocket or glob pattern. They are:
+- Clear (remove from use): neither hide nor pin the files that match the glob pattern(s)
+- Hide (add to files.exclude): add the glob pattern(s) into the 'files.exclude' setting
+- Pin to Tidy Explorer: pin the files that match the glob pattern(s) in the "Tidy Explorer"
+
+Note that if there are patterns defined in the "files.exclude" setting that are not defined in a Pocket, the patterns are shown in the Switch Board under an "Un-managed Excludes" Pocket. This is for the user to be aware of the patterns. However these patterns cannot be toggled.
+
+## Setting Overridden 
+
+A User scope glob pattern's setting (toggle status) may override the setting of the same glob pattern defined in a Workspace or a workspace folder scope. For example, when a glob pattern defined in a User scope is set to "Hide", the pattern is added into the User scope "files.exclude" setting. Then the same glob pattern in the Workspace or a workspace folder, if defined, will be set effectively to "Hide", even if it may be set to "Clear" or "Pin to Tidy Explorer". 
+
+Likewise, if a User scope glob pattern is set to "Pin to Tidy Explorer", the same pattern defined in the Workspace or a workspace folder would be set effectively to "Pin to Tidy Explorer" if it's set to "Clear".
+
+Setting the User scope or Workspace scope glob pattern to "Clear", then the setting overridden will be removed.
+
+## Tidy Explorer
+
+The "Tidy Explorer" only shows files and folders that match the "pinned" glob patterns. This helps the user to quickly access the files that the user is working on.
+
+If a new file is created that match the "pinned" pattern, or a file that matches the "pinned" pattern is removed, the change will be reflected in the "Tidy Explorer".
+
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+When a parent folder of a "pinned" file is moved or deleted, the change won't be reflected in "Tidy Explorer" automatically. This is a known limitation of the current VS Code implementation and may change in the future. 
+
+If a folder is not watched by VS Code (e.g. "node_modules"), change inside that folder won't be reflected automatically in the "Tidy Explorer".
+
+To refresh the "Tidy Explorer", click the "Refresh Tidy Explorer" action icon besides the view title "TIDY EXPLORER" (the icon only appears when mouse pointer moves into the Tidy Explorer)
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
 
 ### 1.0.0
 
-Initial release of ...
+Initial release
 
-### 1.0.1
 
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
------------------------------------------------------------------------------------------------------------
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-**Note:** You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+CMD+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (macOS) to see a list of Markdown snippets
-
-### For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
 
 **Enjoy!**

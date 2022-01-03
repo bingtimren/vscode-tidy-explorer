@@ -1,8 +1,9 @@
 {
 	"name": "tidy-explorer",
 	"displayName": "tidy-explorer",
-	"description": "Tools for tidying up vscode explorer",
-	"version": "0.0.1",
+	"description": "VSCode plugin for tidying up the file explorer",
+	"version": "1.0.0",
+	"publisher": "bingtimren",
 	"engines": {
 		"vscode": "^1.60.0"
 	},
@@ -20,7 +21,7 @@
 				"tidyExplorer.pockets": {
 					"type": "array",
 					"scope": "resource",
-					"description": "Definition of file Pockets",
+					"description": "Pockets are named groups of related glob patterns. For example, you may group glob patterns '**/*.css', '**/*.sass', and '**/*.scss' into a Pocket, and name it \"styles\". You can hide or pin each glob pattern in a Pocket individually, or you can do so to a Pocket as a whole.",
 					"items": {
 						"type": "object",
 						"properties": {
@@ -42,7 +43,7 @@
 			"explorer": [
 				{
 					"id": "tidyExplorerPockets",
-					"name": "File Groups"
+					"name": "Switch Board"
 				},
 				{
 					"id": "tidyExplorerFileView",
@@ -53,18 +54,18 @@
 		"commands": [
 			{
 				"command": "tidyExplorer.setHidden",
-				"title": "Hide in Explorer",
-				"icon": "$(stop)"
+				"title": "Hide (add to files.exclude)",
+				"icon": "$(eye-closed)"
 			},
 			{
 				"command": "tidyExplorer.setInactive",
-				"title": "Un-use",
+				"title": "Clear (remove from use)",
 				"icon": "$(discard)"
 			},
 			{
 				"command": "tidyExplorer.setDisplay",
-				"title": "Show in Tidy Explorer",
-				"icon": "$(eye)"
+				"title": "Pin to Tidy Explorer",
+				"icon": "$(pinned)"
 			},
 			{
 				"command": "tidyExplorer.refresh",

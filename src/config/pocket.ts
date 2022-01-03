@@ -4,7 +4,7 @@ import { TidyExplorerConfiguration, PocketConfiguration } from "./configuration-
 import { TIDY_EXPLORER_CONFIG_KEY } from "./id-keys";
 import { Selector } from "./selector";
 
-export const defaultExcludePocketName = "Default Excludes";
+export const defaultExcludePocketName = "Un-managed Excludes";
 
 export class Pocket {
     isDefaultExclude() {
