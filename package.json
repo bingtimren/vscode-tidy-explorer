@@ -65,6 +65,11 @@
 				"command": "tidyExplorer.setDisplay",
 				"title": "Show in Tidy Explorer",
 				"icon": "$(eye)"
+			},
+			{
+				"command": "tidyExplorer.refresh",
+				"title": "Refresh Tidy Explorer",
+				"icon": "$(refresh)"
 			}
 		],
 		"menus": {
@@ -83,6 +88,13 @@
 					"command": "tidyExplorer.setDisplay",
 					"group": "inline",
 					"when": "view == tidyExplorerPockets && viewItem =~ /S/"
+				}
+			],
+			"view/title": [
+				{
+					"command": "tidyExplorer.refresh",
+					"when": "view == tidyExplorerFileView",
+					"group": "navigation"
 				}
 			]
 		}

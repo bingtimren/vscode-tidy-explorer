@@ -13,3 +13,4 @@ export const CMD_SET_DISPLAY = "tidyExplorer.setDisplay";
 
 // tidy explorer view
 export const FILE_VIEW_ID = "tidyExplorerFileView";
+export const CMD_TIDY_EXPLORER_REFRESH = "tidyExplorer.refresh";

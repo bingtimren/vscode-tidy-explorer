@@ -6,7 +6,7 @@ import { Pocket } from './config/pocket';
 import { Selector } from './config/selector';
 import * as controller from "./control/controller";
 import { pocketViewDataProvider } from "./pocket-view/pocket-view";
-import { tidyExplorerDataProvider } from "./tidy-explorer/tidy-view";
+import { tidyExplorerDataProvider, clear as tidyViewClear, reload as tidyViewReload } from "./tidy-explorer/tidy-view";
 
 
 export let globalState: vscode.Memento | undefined = undefined;
@@ -45,6 +45,12 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.commands.registerCommand(
 		key.CMD_SET_INACTIVE, (item: Pocket | Selector) => { pocketView.reveal(item, {select:true, focus: true}); controller.setSelectorState("inactive", item); }
 	);
+	vscode.commands.registerCommand(
+		key.CMD_TIDY_EXPLORER_REFRESH, ()=>{
+			tidyViewClear();
+			tidyViewReload();			
+		}
+	)
 
 	// load and start-up
 	controller.startUp();

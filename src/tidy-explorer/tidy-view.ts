@@ -8,7 +8,7 @@ import { UriNode } from "./tidy-view-node";
 // other data and values
 const root: UriNode = UriNode.createRoot();
 const onDidChangeTreeDataEmitter: EventEmitter<UriNode | undefined> = new EventEmitter<UriNode | undefined>();
-// globIdStrings -> disposable
+// globIdStrings -> [createSubscription, deleteSubscription];
 const subscriptions: Map<string, Disposable[]> = new Map();
 
 // TidyExplorer DataProvider
@@ -18,9 +18,16 @@ export const tidyExplorerDataProvider: TreeDataProvider<UriNode> = {
         return new TreeItem(element.uri!, element.children ? TreeItemCollapsibleState.Collapsed : TreeItemCollapsibleState.None);
     },
     getChildren: function (element?: UriNode): ProviderResult<UriNode[]> {
-        return (element ?
+        const nodes = (element ?
             (element.children ? Array.from(element.children.values()) : [])
             : Array.from(root.children!.values()));
+        nodes.sort((a,b)=>{
+            if (a.children && (!b.children)) return -1;
+            if ((!a.children) && b.children) return 1;
+            return a.name > b.name? 1 : -1; 
+        });
+        return nodes;
+        
     }
 };
 
