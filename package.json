@@ -3,7 +3,7 @@
 	"displayName": "Tidy Explorer",
 	"description": "VSCode plugin for tidying up the file explorer",
 	"icon": "images/tidy-explorer.png",
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"publisher": "bingtimren",
 	"keywords": [
 		"explorer",
