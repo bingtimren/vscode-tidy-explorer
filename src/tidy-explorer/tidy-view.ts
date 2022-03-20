@@ -15,7 +15,12 @@ const subscriptions: Map<string, Disposable[]> = new Map();
 export const tidyExplorerDataProvider: TreeDataProvider<UriNode> = {
     onDidChangeTreeData: onDidChangeTreeDataEmitter.event,
     getTreeItem: function (element: UriNode): TreeItem | Thenable<TreeItem> {
-        return new TreeItem(element.uri!, element.children ? TreeItemCollapsibleState.Collapsed : TreeItemCollapsibleState.None);
+        const item = new TreeItem(element.uri!, element.children ? TreeItemCollapsibleState.Collapsed : TreeItemCollapsibleState.None);
+        if (!element.children) {
+			item.command = { command: 'vscode.open', title: "Open File", arguments: [element.uri], };
+			item.contextValue = 'file';
+		};
+        return item;
     },
     getChildren: function (element?: UriNode): ProviderResult<UriNode[]> {
         const nodes = (element ?
