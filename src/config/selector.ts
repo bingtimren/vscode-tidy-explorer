@@ -18,6 +18,8 @@ import { Pocket } from "./pocket";
 
 export type SelectorSetting = "hidden" | "inactive" | "display";
 
+export type SelectorSettingSummary = SelectorSetting | "mixed";
+
 export class Selector {
     /**
      * clear registry

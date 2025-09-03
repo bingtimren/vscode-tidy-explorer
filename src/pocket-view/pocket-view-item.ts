@@ -30,8 +30,16 @@ export class PocketViewItem extends vscode.TreeItem {
 
     private decorateItem() {
         if (this.item instanceof Pocket) {
-            this.iconPath = new vscode.ThemeIcon(this.item.isDefaultExclude()?"eye-closed":"files", new vscode.ThemeColor("foreground"));
-            this.tooltip = "Pocket"
+            const selectorsStatusSummary = this.item.getSelectorsStatus();
+            const icon = this.item.isDefaultExclude() ? "eye-closed"
+                : selectorsStatusSummary === "display" ? "pinned"
+                : selectorsStatusSummary === "hidden" ? "eye-closed"
+                : selectorsStatusSummary === "inactive" ? "files"
+                : selectorsStatusSummary === "mixed" ? "unfold"
+                : "files";
+                
+            this.iconPath = new vscode.ThemeIcon(icon, new vscode.ThemeColor("foreground"));
+            this.tooltip = "Pocket";
         }
         else if (this.item instanceof Selector) {
             let tooltip: string = "";
@@ -60,7 +68,7 @@ export class PocketViewItem extends vscode.TreeItem {
             this.iconPath = new vscode.ThemeIcon(
                 this.item === 'Global' ? "account" : (this.item === 'WorkSpace'? "gear" : "symbol-folder")
                 , new vscode.ThemeColor("foreground"));
-            this.tooltip = "Setting scope"
+            this.tooltip = "Setting scope";
         }
     }
 

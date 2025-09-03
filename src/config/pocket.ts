@@ -2,7 +2,7 @@ import { SelectorFileCache } from "../tidy-explorer/selector-file-cache";
 import { ConfigurationTarget, getConfigurationFromTarget, getTargetKey, forEachConfigurationTarget } from "./config-target";
 import { TidyExplorerConfiguration, PocketConfiguration } from "./configuration-data-type";
 import { TIDY_EXPLORER_CONFIG_KEY } from "./id-keys";
-import { Selector } from "./selector";
+import { Selector, SelectorSettingSummary } from "./selector";
 
 export const defaultExcludePocketName = "Un-managed Excludes";
 
@@ -90,6 +90,11 @@ export class Pocket {
 
     // Instance Properties
     public readonly selectors: readonly Selector[];
+
+    // Get a summary of all status of all selectors, "Mixed" if mixed
+    public getSelectorsStatus() : SelectorSettingSummary {
+        return this.selectors.map((selector)=>selector.getEffectiveSetting() as SelectorSettingSummary).reduce((prev, cur)=> prev === cur ? cur : "mixed");
+    }
 
 }
 
