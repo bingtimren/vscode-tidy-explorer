@@ -35,7 +35,7 @@ export class PocketViewItem extends vscode.TreeItem {
                 : selectorsStatusSummary === "display" ? "pinned"
                 : selectorsStatusSummary === "hidden" ? "eye-closed"
                 : selectorsStatusSummary === "inactive" ? "files"
-                : selectorsStatusSummary === "mixed" ? "unfold"
+                : selectorsStatusSummary === "mixed" ? "ellipsis"
                 : "files";
                 
             this.iconPath = new vscode.ThemeIcon(icon, new vscode.ThemeColor("foreground"));
